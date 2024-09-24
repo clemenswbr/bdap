@@ -1,0 +1,176 @@
+# HARV.100 used for INV2020 -- updated by S.W. 9/18/21
+CC   Cover crop false harvest  # Added on SW Suggestion
+1.0               'AGLREM'     # False harv to add CC prod
+1.0               'BGLREM'     # Schl HARV CC 1 day before CULT KILL
+0.0               'FLGHRV'
+0.0               'RMVSTR' 
+0.0               'REMWSD' 
+0.0               'HIBG'
+G     GRAIN
+0.0               'AGLREM'
+0.0               'BGLREM'
+1.0               'FLGHRV'
+0.0               'RMVSTR'
+0.2               'REMWSD'
+0.0               'HIBG'
+G40S    Grain_with_40%_straw_removal
+0.0               'AGLREM'
+0.0               'BGLREM'
+1.0               'FLGHRV'
+0.40              'RMVSTR'
+0.2               'REMWSD'
+0.0               'HIBG'
+GS    Grain_with_50%_straw_removal-old-version
+0.0               'AGLREM'
+0.0               'BGLREM'
+1.0               'FLGHRV'
+0.5               'RMVSTR'
+0.2               'REMWSD'
+0.0               'HIBG'
+G50S    Grain_with_50%_straw_removal
+0.0               'AGLREM'
+0.0               'BGLREM'
+1.0               'FLGHRV'
+0.50              'RMVSTR'
+0.2               'REMWSD'
+0.0               'HIBG'
+G75S    Grain_with_75%_straw_removal
+0.0               'AGLREM'
+0.0               'BGLREM'
+1.0               'FLGHRV'
+0.75              'RMVSTR'
+0.2               'REMWSD'
+0.0               'HIBG'
+G90S    Grain_with_90%_straw_removal
+0.0               'AGLREM'
+0.0               'BGLREM'
+1.0               'FLGHRV'
+0.90              'RMVSTR'
+0.2               'REMWSD'
+0.0               'HIBG'
+GRR    GRAIN_Rice_main_crop_before_Ratoon
+0.3               'AGLREM'
+0.2               'BGLREM'
+1.0               'FLGHRV'
+0.0               'RMVSTR'
+0.0               'REMWSD'
+0.0               'HIBG'
+HS	harvester-shredder
+0.0               'AGLREM'
+0.0               'BGLREM'
+1.0               'FLGHRV'
+0.9               'RMVSTR'
+0.1               'REMWSD'
+0.0               'HIBG'
+ROOT  Roots
+0.0               'AGLREM'
+0.0               'BGLREM'
+0.0               'FLGHRV'
+0.15              'RMVSTR' #not used in non-grain harvest
+0.0               'REMWSD' #not used in non-grain harvest
+0.9               'HIBG'
+R     Roots
+0.0               'AGLREM'
+0.0               'BGLREM'
+0.0               'FLGHRV'
+0.15              'RMVSTR' #not used in non-grain harvest
+0.0               'REMWSD' #not used in non-grain harvest
+0.9               'HIBG'
+H     Hay   removes 85% of the crop
+0.15              'AGLREM'
+0.9               'BGLREM'
+0.0               'FLGHRV'
+0.95              'RMVSTR' #not used in non-grain harvest
+0.0               'REMWSD' #not used in non-grain harvest
+0.0               'HIBG'
+H76   Hay   removes 76% of the crop
+0.24              'AGLREM'
+0.9               'BGLREM'
+0.0               'FLGHRV'
+0.95              'RMVSTR' #not used in non-grain harvest
+0.0               'REMWSD' #not used in non-grain harvest
+0.0               'HIBG'
+HAY     Hay   original parameters  removes 60% of the crop
+0.4               'AGLREM' #from 0.2 9/18/21 SW
+0.9               'BGLREM'
+0.0               'FLGHRV'
+0.75              'RMVSTR' #not used in non-grain harvest
+0.0               'REMWSD'
+0.0               'HIBG'
+MOW     Mow   cut the crop but leave the biomass for decay
+0.25              'AGLREM'
+0.9               'BGLREM'
+0.0               'FLGHRV'
+0.0               'RMVSTR' #not used in non-grain harvest
+0.0               'REMWSD' #not used in non-grain harvest
+0.0               'HIBG'
+MOWT     Mow   cut the crop but leave the biomass for decay
+0.15              'AGLREM'
+0.50              'BGLREM'
+0.0               'FLGHRV'
+0.0               'RMVSTR' #not used in non-grain harvest
+0.0               'REMWSD' #not used in non-grain harvest
+0.0               'HIBG'
+T     Thin_and_remove
+0.7               'AGLREM'
+0.7               'BGLREM'
+0.0               'FLGHRV'
+1.0               'RMVSTR' #not used in non-grain harvest
+0.0               'REMWSD' #not used in non-grain harvest
+1.0               'HIBG'
+SIL     Cut Silage
+0.1               'AGLREM'  # from 0.0 per Cindy K on 1 Nov 2012
+0.0               'BGLREM'
+0.0               'FLGHRV'
+0.9               'RMVSTR' #not used in non-grain harvest
+0.5               'REMWSD' #not used in non-grain harvest
+0.0               'HIBG'
+GR     GRAIN Harvest with return
+0.99              'AGLREM'
+0.0               'BGLREM'
+1.0               'FLGHRV'
+0.0               'RMVSTR'
+0.2               'REMWSD'
+0.0               'HIBG'
+G10S    Grain_with_10%_straw_removal
+0.0               'AGLREM'
+0.0               'BGLREM'
+1.0               'FLGHRV'
+0.1               'RMVSTR'
+0.2               'REMWSD'
+0.0               'HIBG'
+CANE    sugarcane harvest
+0.00              'AGLREM'  
+0.10              'BGLREM' 
+0.0               'FLGHRV'
+0.999             'RMVSTR' #not used in non-grain harvest
+0.0               'REMWSD' #not used in non-grain harvest
+0.0               'HIBG'
+GCANE    green sugarcane harvest #check
+0.00              'AGLREM'  
+0.10              'BGLREM' 
+0.0               'FLGHRV'
+0.85              'RMVSTR' #not used in non-grain harvest
+0.0               'REMWSD' #not used in non-grain harvest
+0.0               'HIBG'
+H90     Hay   removes 90% of the crop
+0.10              'AGLREM' #from .05 9/18/21 SW
+0.9               'BGLREM'
+0.0               'FLGHRV'
+0.95              'RMVSTR' #not used in non-grain harvest
+0.0               'REMWSD' #not used in non-grain harvest
+0.0               'HIBG'
+PINE     pineapple harvest
+0.65              'AGLREM'
+1.0               'BGLREM'
+1.0               'FLGHRV'
+0.0               'RMVSTR'
+0.2               'REMWSD'
+0.0               'HIBG'
+RP     Roots_Peanuts (Max's Kingaroy)
+0.0               'AGLREM'
+0.0               'BGLREM'
+0.0               'FLGHRV'
+0.0               'RMVSTR'
+0.0               'REMWSD'
+0.5               'HIBG'

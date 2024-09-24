@@ -1,0 +1,209 @@
+# OMAD.100 Used for INV2020 -- Based on INV2018, added biosolids, removed state/year PRP, added new single PRP
+PRP      PRP average grams/m2 1/21/2022
+1.0             'OMADTYP'
+1               'ASTGC'
+0.00            'ASTLBL'
+0.08            'ASTLIG'   
+22.60           'ASTREC(1)' #2 X 11.3 
+150.0           'ASTREC(2)'
+150.0           'ASTREC(3)'
+MLRA      us_mlra 1 grams/m2 4/17/2003
+1.5             'OMADTYP'
+1               'ASTGC'
+0.00            'ASTLBL'
+0.13            'ASTLIG'   #0.25  SW 200-8-1
+13.0            'ASTREC(1)'  # C:N ratio was 40.0
+150.0           'ASTREC(2)'
+150.0           'ASTREC(3)'
+BEEF      LRR beef solid  Inventory managed manure
+1.5             'OMADTYP'
+1.0             'ASTGC' 
+0.00            'ASTLBL'
+0.13            'ASTLIG'   
+12.60           'ASTREC(1)'  # C:N ratio
+150.0           'ASTREC(2)'  # ?
+150.0           'ASTREC(3)'  # ?
+BIOSD      biosolids - solid
+1.5             'OMADTYP' 
+8.734           'ASTGC' # gC/m2/ton CEAP table
+0.00            'ASTLBL'
+0.13            'ASTLIG'   #
+13.00           'ASTREC(1)'  # C:N ratio Ceap Table
+19.5            'ASTREC(2)'  # C:P ratio CEAP table
+150.0           'ASTREC(3)'  # ?
+BIOSL      biosolids - slurry
+1.5             'OMADTYP' 
+2.242           'ASTGC' # gC/m2/ton CEAP table
+0.00            'ASTLBL'
+0.13            'ASTLIG'   #
+10.00           'ASTREC(1)'  # C:N ratio Ceap Table
+20.0            'ASTREC(2)'  # C:P ratio CEAP table
+150.0           'ASTREC(3)'  # ?
+BIOLQ      biosolids - liquid
+1.5             'OMADTYP' 
+0.6726          'ASTGC' # gC/m2/ton CEAP table
+0.00            'ASTLBL'
+0.13            'ASTLIG'   #
+6.00            'ASTREC(1)'  # C:N ratio Ceap Table
+6.0             'ASTREC(2)'  # C:P ratio CEAP table
+150.0           'ASTREC(3)'  # ?
+DARY      LRR dairy solid  Inventory managed manure
+1.5             'OMADTYP'
+1.0             'ASTGC'  
+0.00            'ASTLBL'
+0.13            'ASTLIG'   
+12.60           'ASTREC(1)'  # C:N ratio
+150.0           'ASTREC(2)'  # ?
+150.0           'ASTREC(3)'  # ?
+POUL      LRR poultry solid Inventory managed manure
+1.5             'OMADTYP'
+1.0             'ASTGC'  
+0.00            'ASTLBL'
+0.13            'ASTLIG'   #includes bedding
+17.4            'ASTREC(1)'  # C:N ratio, includes bedding
+150.0           'ASTREC(2)'  # ?
+150.0           'ASTREC(3)'  # ?
+SWIN      LRR swine solid dry Inventory managed manure
+1.5             'OMADTYP'
+1.0             'ASTGC'  
+0.00            'ASTLBL'
+0.13            'ASTLIG'   #includes bedding
+13.45           'ASTREC(1)'  # C:N ratio, includes bedding
+150.0           'ASTREC(2)'  # ?
+150.0           'ASTREC(3)'  # ?
+HORS      LRR horse solid Inventory managed manure
+1.5             'OMADTYP'
+1.0             'ASTGC'  
+0.00            'ASTLBL' #revised 1/7/21 SAW
+0.20            'ASTLIG'   
+30.72           'ASTREC(1)'  # C:N ratio, includes bedding
+150.0           'ASTREC(2)'  # ?
+150.0           'ASTREC(3)'  # ?
+SHEP      LRR sheep solid Inventory managed manure
+1.5             'OMADTYP'
+1.0             'ASTGC' 
+0.00            'ASTLBL'
+0.15            'ASTLIG'   #revised 1/7/21 SAW
+11.36           'ASTREC(1)'  # C:N ratio
+150.0           'ASTREC(2)'  # ?
+150.0           'ASTREC(3)'  # ?
+NS13        NatureSafe 13-0-0 organic fert  
+1.0               'OMADTYP'
+134.4             'ASTGC'  
+0.00            'ASTLBL' 
+0.13            'ASTLIG' 
+8.0            'ASTREC(1)'
+300.00          'ASTREC(2)'
+300.00          'ASTREC(3)'
+NS13B        NatureSafe 13-0-0 organic fert  
+1.0               'OMADTYP'
+44.8             'ASTGC'  
+0.00            'ASTLBL' 
+0.13            'ASTLIG' 
+8.0            'ASTREC(1)'
+300.00          'ASTREC(2)'
+300.00          'ASTREC(3)'
+EL16   16tons manure Elora
+1.5               'OMADTYP'
+278             'ASTGC'  
+0.00            'ASTLBL' 
+0.13            'ASTLIG' 
+12.0            'ASTREC(1)'
+150.00          'ASTREC(2)'
+150.00          'ASTREC(3)'
+FC12     Ardec manure 2012
+1.8               'OMADTYP'
+765.6        'ASTGC'
+1.0          'ASTLBL'
+0.18           'ASTLIG'
+15.93         'ASTREC(1)'
+300.0        'ASTREC(2)'
+300.0        'ASTREC(3)'
+FC13     Ardec manure 2013
+1.8               'OMADTYP'
+497.3        'ASTGC'
+1.0          'ASTLBL'
+0.18           'ASTLIG'
+14.10         'ASTREC(1)'
+300.0        'ASTREC(2)'
+300.0        'ASTREC(3)'
+FC14     Ardec manure 2014
+1.8               'OMADTYP'
+527.0        'ASTGC'
+1.0          'ASTLBL'
+0.18           'ASTLIG'
+13.09         'ASTREC(1)'
+300.0        'ASTREC(2)'
+300.0        'ASTREC(3)'
+KC12      Kimberly ID compost 2012
+1.9               'OMADTYP'
+298.9           'ASTGC' 
+0.00            'ASTLBL'
+0.13            'ASTLIG'     #a guess
+13.1           'ASTREC(1)'  # C:N ratio
+150.0           'ASTREC(2)'  # ?
+150.0           'ASTREC(3)'  # ?
+KC13      Kimberly ID compost 2013
+1.9               'OMADTYP'
+338.4           'ASTGC' 
+0.00            'ASTLBL'
+0.13            'ASTLIG'     #a guess
+9.9           'ASTREC(1)'  # C:N ratio
+150.0           'ASTREC(2)'  # ?
+150.0           'ASTREC(3)'  # ?
+KS13      Kimberly ID spring manure 2013
+1.5               'OMADTYP'
+795.           'ASTGC' 
+0.00            'ASTLBL'
+0.13            'ASTLIG'     #a guess
+13.9           'ASTREC(1)'  # C:N ratio
+150.0           'ASTREC(2)'  # ?
+150.0           'ASTREC(3)'  # ?
+KS14      Kimberly ID spring manure 2014
+1.5               'OMADTYP'
+1324.           'ASTGC' 
+0.00            'ASTLBL'
+0.13            'ASTLIG'     #a guess
+14.5           'ASTREC(1)'  # C:N ratio
+150.0           'ASTREC(2)'  # ?
+150.0           'ASTREC(3)'  # ?
+KF12      Kimberly ID fall manure 2012
+1.5               'OMADTYP'
+1600.           'ASTGC' 
+0.00            'ASTLBL'
+0.13            'ASTLIG'     #a guess
+14.8           'ASTREC(1)'  # C:N ratio
+150.0           'ASTREC(2)'  # ?
+150.0           'ASTREC(3)'  # ?
+KF13      Kimberly ID fall manure 2013
+1.5               'OMADTYP'
+1548.           'ASTGC' 
+0.00            'ASTLBL'
+0.13            'ASTLIG'     #a guess
+13.2           'ASTREC(1)'  # C:N ratio
+150.0           'ASTREC(2)'  # ?
+150.0           'ASTREC(3)'  # ?
+M        STRAW-MANURE
+1               'OMADTYP'
+100.0           'ASTGC'
+0.0             'ASTLBL'
+0.13            'ASTLIG'
+30.0            'ASTREC(1)'
+300.0           'ASTREC(2)'
+300.0           'ASTREC(3)'
+IM20     MANURE  Iowa application rates ( 5 x 4)
+1.5               'OMADTYP'
+20.0            'ASTGC'
+0.0             'ASTLBL'
+0.13            'ASTLIG'   #0.25  SW 200-8-1
+15.0            'ASTREC(1)'
+150.0           'ASTREC(2)'
+150.0           'ASTREC(3)'
+VCH        Vetch biomass  
+1.0               'OMADTYP'
+87.1             'ASTGC'  
+0.00            'ASTLBL' 
+0.13            'ASTLIG' 
+8.5            'ASTREC(1)'
+300.00          'ASTREC(2)'
+300.00          'ASTREC(3)'
