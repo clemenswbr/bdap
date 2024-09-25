@@ -161,7 +161,7 @@ def convert_sch_mana(sch_file_name, mana_file_name, omad100_file_name, harv100_f
             if line.startswith('#'):
                 in_lines.remove(line)
 
-            if len(line) == 0:
+            if len(line) <= 1:
                 in_lines.remove(line)
 
         for i, line in enumerate(in_lines):
