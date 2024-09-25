@@ -238,7 +238,7 @@ def convert_sch_mana(sch_file_name, mana_file_name, omad100_file_name, harv100_f
                         elif event == 'CROP':
                             crop = line.split()[3]
                             ldndc_crop = lookup[lookup['dc_crop'] == crop]['ldndc_crop'].iloc[0]
-                            ldndc_initbiom = '10' ###where to get initialbiomass from
+                            ldndc_initbiom = '100'
 
                         elif event == 'PLTM':
                             ldndc_event = ET.SubElement(top, 'event')
