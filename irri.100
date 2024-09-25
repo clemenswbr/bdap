@@ -148,3 +148,9 @@ AF15  15_cm_at_95%_awhc # added by Karolien Denef (05_23_05)
 0.50              'FAWHC'
 15.0              'IRRAUT'
 0.0               'IRRAMT'
+A0   Automatic_irrigation_at_0
+0.0               'AUIRRI'
+0.0              'FAWHC'
+0.0               'IRRAUT'
+0.0               'IRRAMT'
+
