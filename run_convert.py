@@ -16,7 +16,7 @@ for run_number in run_numbers:
 
     dcldndc.convert_dcsoil_ldndcsoil(f'../soils{run_number}.in', f'./test/{run_number}_site.xml')
     dcldndc.convert_wth_climate(f'../meteo{run_number}.wth', f'./test/{run_number}_climate.txt', f'../site{run_number}.100')
-    dcldndc.convert_sch_mana(f'../mgt{run_number}.evt', f'./test/{run_number}_mana.xml', 'omad.100', 'harv.100', 'irri.100', 'dc_ldndc_lookup.csv')
+    dcldndc.convert_sch_mana(f'../mgt{run_number}.evt', f'./test/{run_number}_mana.xml', f'../dirComad{run_number}.in', 'harv.100', 'irri.100', 'dc_ldndc_lookup.csv')
     dcldndc.create_setup(run_number, f'./test/{run_number}_setup.xml')
     dcldndc.create_ldndc(run_number, f'./test/{run_number}.ldndc', f'./test/{run_number}_mana.xml')
     dcldndc.create_airchem(run_number)
