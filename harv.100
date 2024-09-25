@@ -174,3 +174,11 @@ RP     Roots_Peanuts (Max's Kingaroy)
 0.0               'RMVSTR'
 0.0               'REMWSD'
 0.5               'HIBG'
+RB     Roots
+0.0               'AGLREM'
+0.0               'BGLREM'
+0.0               'FLGHRV'
+0.3               'RMVSTR'
+0.0               'REMWSD'
+0.9               'HIBG'
+
