@@ -132,7 +132,8 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args):
             
         f.write('%data\n')
 
-        f.write(wth_file.to_string(index=False))
+        wth_file.to_csv(f, index=False, header=True, sep='\t')
+        #f.write(wth_file.to_string(index=False))
     
     print(f'Created file {microclimate_file_name}')
 
