@@ -33,7 +33,7 @@ def read_dot100(in_file_name):
 
 
 ##Conversion for DayCent soil file (soils.in) to LandscapeDNDC site file (*site.xml)
-def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name):
+def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, row, col, C, N):
 
     dc_soil = pd.read_csv(dcsoil_file_name, sep='\t', header=None)
 
@@ -51,11 +51,12 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name):
     #Convert sks cm/sec -> cm/min
     dc_soil['sks'] = dc_soil['sks']*60
 
-    ###
     #Add norg and corg from LUCAS data
-    corg = 0.024
+    corg = C[row, col]
     dc_soil['corg'] = corg
-    ###
+
+    norg = N[row, col]/1000 #Convert from g/kg^3 to kg/kg
+    dc_soil['norg'] = norg
 
     #Write to *site.xml
     top = ET.Element('site')
