@@ -19,19 +19,19 @@ for run in glob.glob('../soils*.in'):
     row = int(run.split('_')[1])
     col = int(run.split('_')[2][:-3])
     
-    run_index = f'_{row}_{col}'
+    run_index = f'{row}_{col}'
 
     print(run_index)
-    print(f'../soils{run_index}.in', f'./test/{run_index}_site.xml')
-    print(f'../meteo{run_index}.wth', f'./test/{run_index}_climate.txt', f'../site{run_index}.100')
-    print(f'../mgt{run_index}.evt', f'./test/{run_index}_mana.xml', f'dirComad{run_index}.in', harv100, irri100, 'dc_ldndc_lookup.csv')
+    print(f'../soils_{run_index}.in', f'./test/{run_index}_site.xml')
+    print(f'../meteo_{run_index}.wth', f'./test/{run_index}_climate.txt', f'../site_{run_index}.100')
+    print(f'../mgt_{run_index}.evt', f'./test/{run_index}_mana.xml', f'dirComad_{run_index}.in', harv100, irri100, 'dc_ldndc_lookup.csv')
     print(run_index, f'./test/{run_index}_setup.xml')
     print(run_index, f'./test/{run_index}.ldndc', f'./test/{run_index}_mana.xml')
     print('_______________________________')
 
-    dcldndc.convert_dcsoil_ldndcsoil(f'../soils{run_index}.in', f'./test/{run_index}_site.xml', row, col, C, N)
-    dcldndc.convert_wth_climate(f'../meteo{run_index}.wth', f'./test/{run_index}_climate.txt', f'../site{run_index}.100')
-    dcldndc.convert_sch_mana(f'../mgt{run_index}.evt', f'./test/{run_index}_mana.xml', f'../dirComad{run_index}.in', harv100, irri100, 'dc_ldndc_lookup.csv')
+    dcldndc.convert_dcsoil_ldndcsoil(f'../soils_{run_index}.in', f'./test/{run_index}_site.xml', row, col, C, N)
+    dcldndc.convert_wth_climate(f'../meteo_{run_index}.wth', f'./test/{run_index}_climate.txt', f'../site_{run_index}.100')
+    dcldndc.convert_sch_mana(f'../mgt_{run_index}.evt', f'./test/{run_index}_mana.xml', f'../dirComad_{run_index}.in', harv100, irri100, 'dc_ldndc_lookup.csv')
     dcldndc.create_setup(run_index, f'./test/{run_index}_setup.xml')
     dcldndc.create_ldndc(run_index, f'./test/{run_index}.ldndc', f'./test/{run_index}_mana.xml')
     dcldndc.create_airchem(run_index)
