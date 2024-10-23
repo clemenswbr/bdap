@@ -17,7 +17,7 @@ omad100 = '../../../../MODEL/DAYCENT/RUN/DayC/omad.100'
 for run in glob.glob('../soils*.in'):
 
     row = int(run.split('_')[1])
-    col = int(run.split('_')[2])
+    col = int(run.split('_')[2][:-3])
     
     run_index = f'_{row}_{col}'
 
