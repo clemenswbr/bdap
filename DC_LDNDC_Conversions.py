@@ -41,6 +41,7 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, row, col, C,
     dc_soil.columns = col_names
 
     dc_soil.insert(0, 'depth', value=(dc_soil['lower_depth'] - dc_soil['upper_depth'])*10)
+    dc_soil.insert(1, 'split', value=np.tile(5, len(dc_soil)))
     dc_soil = dc_soil.drop(['upper_depth', 'lower_depth', 'evaporation', 'root_fraction', 'organic_matter', 'deltamin'], axis='columns')
 
     #Unit conversions
@@ -52,10 +53,14 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, row, col, C,
     dc_soil['sks'] = dc_soil['sks']*60
 
     #Add norg and corg from LUCAS data
-    corg = C[row, col]
+    depths = np.cumsum(dc_soil['depth'])
+
+    corg_ts = C[row, col]
+    corg = [corg_ts * np.exp((-1 * int(d) + 20) * 0.03) for d in depths]
     dc_soil['corg'] = corg
 
-    norg = N[row, col]/1000 #Convert from g/kg^3 to kg/kg
+    norg_ts = N[row, col]/1000 #Convert from g/kg^3 to kg/kg
+    norg = [norg_ts * np.exp((-1 * int(d) + 20) * 0.03) for d in depths]
     dc_soil['norg'] = norg
 
     #Write to *site.xml
