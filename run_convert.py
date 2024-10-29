@@ -6,11 +6,11 @@ import rasterio
 #Read N and C dataset, replace no data values with 0
 N_data = rasterio.open('../../../LUCAS_N_EU_SW_kgkg_SSPM.tif')
 N = N_data.read(1)
-N[N < 0] = 0
+N[N < 0] = 1
 
 C_data = rasterio.open('../../../../MODEL/SptLYR/soil_LCS.tif')
 C = C_data.read(5)
-C[C < 0] = 0
+C[C < 0] = 1
 
 irri100 = '../../../../MODEL/DAYCENT/RUN/DayC/irri.100'
 harv100 = '../../../../MODEL/DAYCENT/RUN/DayC/harv.100'
