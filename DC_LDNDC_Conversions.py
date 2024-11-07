@@ -5,7 +5,7 @@ import re
 import os
 from copy import deepcopy
 
-##Reads a *.100 or similarly structured file into a dictionary structure
+##Reads a *.100 or similarly structured file into a nested dictionary
 def read_dot100(in_file_name):
 
     in_file = open(in_file_name, 'r')
@@ -84,18 +84,20 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, row, col, C,
     print(f'Created file {ldndcsoil_file_name}')
        
 ##Conversion of DayCent *.wth to LDNDC *climate.txt
+##This only works for the JRC .wth files. They have 9 columns, regular DayCent weather files have 7. Code can be edited accordingly
 def convert_wth_climate(wth_file_name, microclimate_file_name, *args):
 
     wth_file = pd.read_csv(wth_file_name, sep='\t', header=None)
-    wth_file = wth_file.iloc[:,:7] #Only the first 7 columns are predefined
-    wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec']
+    wth_file = wth_file.iloc[:,:9] #Only the first 7 columns are predefined
+    wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'tavg', 'rad']
 
     start_time =  f"{wth_file[:1]['year'][0]}-{wth_file[:1]['month'][0]}-{wth_file['day'][0]}"
+    end_time = f"{wth_file[:1]['year'][-1]}-{wth_file[:1]['month'][-1]}-{wth_file['day'][-1]}"
 
     wth_file['prec'] = wth_file['prec']/10 #Convert from cm to mm
     wth_file['day'] = [str(d).zfill(2) for d in wth_file['day']]
     wth_file['month'] = [str(d).zfill(2) for d in wth_file['month']]
-    wth_file = wth_file[['tmax', 'tmin', 'prec']]
+    wth_file = wth_file[['tmax', 'tmin', 'prec', 'tavg', 'rad']]
 
     #Get lat and long from site.100 file
     if len(args) > 0:
@@ -109,16 +111,10 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args):
         long = site100['Site']['SITLNG']
         elev = site100['Site']['ELEV']
 
-        ###Add elevation from E-obs
-    
-    ###
-    #Average temperature and radiation need to be added from the raw data (Copernicus E-obs)
-    ###
-
-    tavg = pd.concat([wth_file['tmax'], wth_file['tmin']], axis=1).agg(np.mean, 1) ###
-    wth_file = pd.concat([tavg, wth_file], axis='columns')
-    wth_file.columns = ['tavg', 'tmax', 'tmin', 'prec']
-    wth_file = wth_file.reset_index(drop=True)
+    #tavg = pd.concat([wth_file['tmax'], wth_file['tmin']], axis=1).agg(np.mean, 1) ###
+    #wth_file = pd.concat([tavg, wth_file], axis='columns')
+    #wth_file.columns = ['tavg', 'tmax', 'tmin', 'prec']
+    #wth_file = wth_file.reset_index(drop=True)
 
     with open(microclimate_file_name, 'w') as f:
 
@@ -139,18 +135,11 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args):
         f.write('%data\n')
 
         wth_file.to_csv(f, index=False, header=True, sep='\t')
-        #f.write(wth_file.to_string(index=False))
     
     print(f'Created file {microclimate_file_name}')
 
 #Function to convert DayCent *.sch/*.evt file to LDNDC *.mana file
-def convert_sch_mana(sch_file_name, mana_file_name, omad100_file_name, harv100_file_name, irrig100_file_name, lookup_file_name):
-
-    #Read files
-    lookup = pd.read_csv(lookup_file_name, sep='\t')
-    omad100 = read_dot100(omad100_file_name) 
-    harv100 = read_dot100(harv100_file_name)
-    irri100 = read_dot100(irrig100_file_name)
+def convert_sch_mana(sch_file_name, mana_file_name, omad100, harv100, irrig100, lookup):
 
     with open(sch_file_name, 'r') as events_in, open(mana_file_name, 'wb') as events_out:
 
