@@ -92,7 +92,7 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args):
     wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'tavg', 'rad']
 
     start_time =  f"{wth_file[:1]['year'][0]}-{wth_file[:1]['month'][0]}-{wth_file['day'][0]}"
-    end_time = f"{wth_file[:1]['year'][-1]}-{wth_file[:1]['month'][-1]}-{wth_file['day'][-1]}"
+    #end_time = f"{wth_file[:1]['year'][-1]}-{wth_file[:1]['month'][-1]}-{wth_file['day'][-1]}"
 
     wth_file['prec'] = wth_file['prec']/10 #Convert from cm to mm
     wth_file['day'] = [str(d).zfill(2) for d in wth_file['day']]
