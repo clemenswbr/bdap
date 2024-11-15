@@ -13,7 +13,7 @@ C_data = rasterio.open('../../../../MODEL/SptLYR/soil_LCS.tif')
 C = C_data.read(5)
 C[C < 0] = -99.99
 
-lookup = pd.read_csv(lookup_file_name, sep='\t')
+lookup = pd.read_csv('dc_ldndc_lookup.csv', sep='\t')
 omad100 = dcldndc.read_dot100('../../../../MODEL/DAYCENT/RUN/DayC/omad.100') 
 harv100 = dcldndc.read_dot100('../../../../MODEL/DAYCENT/RUN/DayC/harv.100')
 irri100 = dcldndc.read_dot100('../../../../MODEL/DAYCENT/RUN/DayC/irri.100')
