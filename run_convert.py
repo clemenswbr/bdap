@@ -27,15 +27,15 @@ for run in glob.glob('../soils*.in'):
     run_index = f'{row}_{col}'
 
     print('Soil: ', f'../soils_{run_index}.in', f'./test/{run_index}_site.xml', row, col, 'C', 'N')
-    print('Meteo: ', f'../meteo_{run_index}.wth', f'./test/{run_index}_climate.txt', f'../site_{run_index}.100')
+    print('Meteo: ', f'../../../meteo/{run_index}.wth', f'./test/{run_index}_climate.txt', f'../site_{run_index}.100')
     print('Mana: ', f'../mgt_{run_index}.evt', f'./test/{run_index}_mana.xml', 'omad100', 'harv100', 'irri100', 'lookup')
     print('Setup: ', run_index, f'./test/{run_index}_setup.xml')
     print('LDNDC: ', run_index, f'./test/{run_index}.ldndc', f'./test/{run_index}_mana.xml')
-    print('Airhchem: ', run_index)
+    print('Airchem: ', run_index)
     print('_______________________________')
 
     dcldndc.convert_dcsoil_ldndcsoil(f'../soils_{run_index}.in', f'./test/{run_index}_site.xml', row, col, C, N)
-    dcldndc.convert_wth_climate(f'../meteo_{run_index}.wth', f'./test/{run_index}_climate.txt', f'../site_{run_index}.100')
+    dcldndc.convert_wth_climate(f'../../../meteo/{run_index}.wth', f'./test/{run_index}_climate.txt', f'../site_{run_index}.100')
     dcldndc.convert_sch_mana(f'../mgt_{run_index}.evt', f'./test/{run_index}_mana.xml', omad100, harv100, irri100, lookup)
     dcldndc.create_setup(run_index, f'./test/{run_index}_setup.xml')
     dcldndc.create_ldndc(run_index, f'./test/{run_index}.ldndc', f'./test/{run_index}_mana.xml')
