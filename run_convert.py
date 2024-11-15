@@ -19,15 +19,16 @@ harv100 = dcldndc.read_dot100('../../../../MODEL/DAYCENT/RUN/DayC/harv.100')
 irri100 = dcldndc.read_dot100('../../../../MODEL/DAYCENT/RUN/DayC/irri.100')
 
 #Loop through soil files for simulations
-for run in glob.glob('../soils*.in'):
+for run in glob.glob('../meteo*.wth'):
 
     row = int(run.split('_')[1])
-    col = int(run.split('_')[2][:-3])
+    col = int(run.split('_')[2])
     
     run_index = f'{row}_{col}'
+    meteo_index = int(run.split('_')[3][:-4])
 
     print('Soil: ', f'../soils_{run_index}.in', f'./test/{run_index}_site.xml', row, col, 'C', 'N')
-    print('Meteo: ', f'../../../meteo/{run_index}.wth', f'./test/{run_index}_climate.txt', f'../site_{run_index}.100')
+    print('Meteo: ', f'../meteo_{run_index}_{meteo_index}.wth', f'./test/{run_index}_climate.txt', f'../site_{run_index}.100')
     print('Mana: ', f'../mgt_{run_index}.evt', f'./test/{run_index}_mana.xml', 'omad100', 'harv100', 'irri100', 'lookup')
     print('Setup: ', run_index, f'./test/{run_index}_setup.xml')
     print('LDNDC: ', run_index, f'./test/{run_index}.ldndc', f'./test/{run_index}_mana.xml')
@@ -35,7 +36,7 @@ for run in glob.glob('../soils*.in'):
     print('_______________________________')
 
     dcldndc.convert_dcsoil_ldndcsoil(f'../soils_{run_index}.in', f'./test/{run_index}_site.xml', row, col, C, N)
-    dcldndc.convert_wth_climate(f'../../../meteo/{run_index}.wth', f'./test/{run_index}_climate.txt', f'../site_{run_index}.100')
+    dcldndc.convert_wth_climate(f'../meteo_{run_index}_{meteo_index}.wth', f'./test/{run_index}_climate.txt', f'../site_{run_index}.100')
     dcldndc.convert_sch_mana(f'../mgt_{run_index}.evt', f'./test/{run_index}_mana.xml', omad100, harv100, irri100, lookup)
     dcldndc.create_setup(run_index, f'./test/{run_index}_setup.xml')
     dcldndc.create_ldndc(run_index, f'./test/{run_index}.ldndc', f'./test/{run_index}_mana.xml')
