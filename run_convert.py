@@ -9,8 +9,8 @@ N_data = rasterio.open('../../../LUCAS_N_EU_SW_kgkg_SSPM.tif')
 N = N_data.read(1)
 N[N < 0] = -99.99   
 
-C_data = rasterio.open('../../../../MODEL/SptLYR/soil_LCS.tif')
-C = C_data.read(5)
+C_data = rasterio.open('../../../LUCAS_EU_SOC.tif')
+C = C_data.read(1)/1000 #Convert from g/kg to kg/kg
 C[C < 0] = -99.99
 
 lookup = pd.read_csv('dc_ldndc_lookup.csv', sep='\t')
