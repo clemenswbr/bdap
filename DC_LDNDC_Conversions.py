@@ -94,9 +94,10 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args):
     wth_file['prec'] = wth_file['prec']/10 #Convert from cm to mm
     wth_file['day'] = [str(d).zfill(2) for d in wth_file['day']]
     wth_file['month'] = [str(d).zfill(2) for d in wth_file['month']]
-    wth_file = wth_file[['tmax', 'tmin', 'prec', 'tavg', 'rad']]
 
     start_time =  f"{wth_file['year'][0]}-{wth_file['month'][0]}-{wth_file['day'][0]}"
+
+    wth_file = wth_file[['tmax', 'tmin', 'prec', 'tavg', 'rad']]
 
     #Get lat and long from site.100 file
     if len(args) > 0:
