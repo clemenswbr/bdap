@@ -21,6 +21,8 @@ irri100 = dcldndc.read_dot100('../../../../MODEL/DAYCENT/RUN/DayC/irri.100')
 #Loop through soil files for simulations
 for run in glob.glob('../meteo*.wth')[0]:
 
+    print(run)
+    
     row = int(run.split('_')[1])
     col = int(run.split('_')[2])
     
