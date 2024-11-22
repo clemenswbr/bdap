@@ -25,6 +25,8 @@ for run in glob.glob('../meteo*.wth')[:10]:
 
     row = int(run.split('_')[1])
     col = int(run.split('_')[2])
+
+    print('row ', row, 'col ', col)
     
     run_index = f'{row}_{col}'
     meteo_index = int(run.split('_')[3][:-4])
