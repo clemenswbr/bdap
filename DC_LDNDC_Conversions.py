@@ -41,7 +41,7 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, row, col, C,
     dc_soil.columns = col_names
 
     dc_soil.insert(0, 'depth', value=(dc_soil['lower_depth'] - dc_soil['upper_depth'])*10)
-    dc_soil.insert(1, 'split', value=np.tile(5, len(dc_soil)))
+    dc_soil.insert(1, 'split', value=np.tile(int(5), len(dc_soil)))
     dc_soil = dc_soil.drop(['upper_depth', 'lower_depth', 'evaporation', 'root_fraction', 'organic_matter', 'deltamin'], axis='columns')
 
     #Unit conversions
