@@ -55,13 +55,15 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, row, col, C,
     #Add norg and corg from LUCAS data
     depths = np.cumsum(dc_soil['depth'])
 
-    corg_ts = C[row, col]
+    corg_ts = C[row, col] #Topsoil organic carbon
     corg = [corg_ts * np.exp((-1 * int(d) + 20) * 0.03) for d in depths]
     dc_soil['corg'] = corg
 
-    norg_ts = N[row, col]/1000 #Convert from g/kg^3 to kg/kg
+    norg_ts = N[row, col]/1000 #Convert from g/kg^3 to kg/kg, topsoil organic nitrogen
     norg = [norg_ts * np.exp((-1 * int(d) + 20) * 0.03) for d in depths]
     dc_soil['norg'] = norg
+
+    print(f'-------> C: {corg} N: {norg} <--------')
 
     #Write to *site.xml
     top = ET.Element('site')
