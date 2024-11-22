@@ -88,6 +88,7 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, row, col, C,
 def convert_wth_climate(wth_file_name, microclimate_file_name, *args):
 
     wth_file = pd.read_csv(wth_file_name, sep='\t', header=None)
+    wth_file = wth_file.dropna(axis='rows')
     wth_file = wth_file.iloc[:,:9] #Only the first 7 columns are predefined
     wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'tavg', 'rad']
 
