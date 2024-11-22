@@ -90,8 +90,8 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args):
     wth_file = pd.read_csv(wth_file_name, sep='\t', header=None)
     wth_file = wth_file.iloc[:,:9] #Only the first 7 columns are predefined
     wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'tavg', 'rad']
-    wth_file = wth_file.astype({'day':int, 'month':int, 'year':int})
     wth_file = wth_file.dropna(axis='rows', subset=['day'])
+    wth_file = wth_file.astype({'day':int, 'month':int, 'year':int})
 
     wth_file['prec'] = wth_file['prec']/10 #Convert from cm to mm
     wth_file['day'] = [str(d).zfill(2) for d in wth_file['day']]
