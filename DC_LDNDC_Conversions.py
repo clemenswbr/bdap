@@ -100,7 +100,7 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args):
     start_time =  f"{wth_file['year'][0]}-{wth_file['month'][0]}-{wth_file['day'][0]}"
 
     wth_file = wth_file[['tmax', 'tmin', 'tavg', 'prec', 'rad']]
-    wth_file.round(2)
+    wth_file = wth_file.round(2)
 
     #Get lat and long from site.100 file
     if len(args) > 0:
