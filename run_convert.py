@@ -49,7 +49,7 @@ for run in glob.glob('../meteo*.wth')[:10]:
 
     dcldndc.convert_dcsoil_ldndcsoil(f'../soils_{run_index}.in', f'./test/{run_index}_site.xml', row, col, C, N)
     dcldndc.convert_wth_climate(f'../meteo_{run_index}_{meteo_index}.wth', f'./test/{run_index}_climate.txt', f'../site_{run_index}.100')
-    dcldndc.convert_sch_mana(f'../mgt_{run_index}.evt', f'./test/{run_index}_mana.xml', omad100, harv100, irri100, lookup)
+    dcldndc.convert_evt_mana(f'../mgt_{run_index}.evt', f'./test/{run_index}_mana.xml', omad100, harv100, irri100, lookup)
     dcldndc.create_setup(run_index, f'./test/{run_index}_setup.xml')
     dcldndc.create_ldndc(run_index, f'./test/{run_index}.ldndc', f'./test/{run_index}_mana.xml')
     dcldndc.create_airchem(run_index)

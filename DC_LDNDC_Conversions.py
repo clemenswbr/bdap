@@ -144,7 +144,7 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args):
     print(f'Created file {microclimate_file_name}')
 
 #Function to convert DayCent *.sch/*.evt file to LDNDC *.mana file
-def convert_sch_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, lookup):
+def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, lookup):
 
     with open(sch_file_name, 'r') as events_in, open(mana_file_name, 'wb') as events_out:
 
