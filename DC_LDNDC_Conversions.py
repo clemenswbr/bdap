@@ -33,7 +33,7 @@ def read_dot100(in_file_name):
 
 
 ##Conversion for DayCent soil file (soils.in) to LandscapeDNDC site file (*site.xml)
-def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, row, col, C, N):
+def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, corg_ts, norg_ts):
 
     dc_soil = pd.read_csv(dcsoil_file_name, sep='\t', header=None)
 
@@ -55,15 +55,24 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, row, col, C,
     #Add norg and corg from LUCAS data
     depths = np.cumsum(dc_soil['depth'])
 
-    corg_ts = C[row, col] #Topsoil organic carbon
-    corg = [corg_ts * np.exp((-1 * int(d) + 20) * 0.03) for d in depths]
-    dc_soil['corg'] = corg
+    #Build corg and norg
+    if corg_ts == -99.99:
+        corg = np.tile(-99.99, len(depths))
 
-    norg_ts = N[row, col]/1000 #Convert from g/kg^3 to kg/kg, topsoil organic nitrogen
-    norg = [norg_ts * np.exp((-1 * int(d) + 20) * 0.03) for d in depths]
+    elif norg_ts == -99.99:
+        norg = np.tile(-99.99, len(depths))
+
+    elif corg_ts/norg_ts <= 10: #Adjust C:N ratio if lower <= 10
+        norg_ts = corg_ts/10
+        corg = [corg_ts * np.exp((-1 * int(d) + 20) * 0.03) for d in depths]
+        norg = [norg_ts * np.exp((-1 * int(d) + 20) * 0.03) for d in depths]
+
+    else:
+        corg = [corg_ts * np.exp((-1 * int(d) + 20) * 0.03) for d in depths]
+        norg = [norg_ts * np.exp((-1 * int(d) + 20) * 0.03) for d in depths]
+
     dc_soil['norg'] = norg
-
-    print(f'-------> C: {corg} N: {norg} <--------')
+    dc_soil['corg'] = corg
 
     #Write to *site.xml
     top = ET.Element('site')
@@ -116,10 +125,11 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args):
         long = site100['Site']['SITLNG']
         elev = site100['Site']['ELEV']
 
-    #tavg = pd.concat([wth_file['tmax'], wth_file['tmin']], axis=1).agg(np.mean, 1) ###
+    #tavg = pd.concat([wth_file['tmax'], wth_file['tmin']], axis=1).agg(np.mean, 1)
     #wth_file = pd.concat([tavg, wth_file], axis='columns')
     #wth_file.columns = ['tavg', 'tmax', 'tmin', 'prec']
-    #wth_file = wth_file.reset_index(drop=True)
+    
+    wth_file = wth_file.reset_index(drop=True)
 
     with open(microclimate_file_name, 'w') as f:
 

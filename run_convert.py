@@ -3,7 +3,6 @@ import glob
 import subprocess
 import rasterio
 import pandas as pd
-import geopandas as gpd
 
 # country_code = 'DE'
 
@@ -35,6 +34,12 @@ for run in glob.glob('../meteo*.wth')[:10]:
     col = int(run.split('_')[2])
 
     print('row ', row, 'col ', col)
+
+    #Get topsoil organic C and N from additional files
+    corg_ts = C[row, col]
+    norg_ts = N[row, col]
+
+    print('corg ', corg_ts, 'norg ', norg_ts)
     
     run_index = f'{row}_{col}'
     meteo_index = int(run.split('_')[3][:-4])
@@ -47,7 +52,7 @@ for run in glob.glob('../meteo*.wth')[:10]:
     print('Airchem: ', run_index)
     print('_______________________________')
 
-    dcldndc.convert_dcsoil_ldndcsoil(f'../soils_{run_index}.in', f'./test/{run_index}_site.xml', row, col, C, N)
+    dcldndc.convert_dcsoil_ldndcsoil(f'../soils_{run_index}.in', f'./test/{run_index}_site.xml', corg, norg)
     dcldndc.convert_wth_climate(f'../meteo_{run_index}_{meteo_index}.wth', f'./test/{run_index}_climate.txt', f'../site_{run_index}.100')
     dcldndc.convert_evt_mana(f'../mgt_{run_index}.evt', f'./test/{run_index}_mana.xml', omad100, harv100, irri100, lookup)
     dcldndc.create_setup(run_index, f'./test/{run_index}_setup.xml')
