@@ -6,6 +6,8 @@ import os
 from copy import deepcopy
 
 ##Reads a *.100 or similarly structured file into a nested dictionary
+##Other conversion functions require this structure
+##Is called by *.wth conversion
 def read_dot100(in_file_name):
 
     in_file = open(in_file_name, 'r')
@@ -33,15 +35,18 @@ def read_dot100(in_file_name):
 
 
 ##Conversion for DayCent soil file (soils.in) to LandscapeDNDC site file (*site.xml)
-def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, corg_ts, norg_ts):
+##DayCent soil does not contain Norg and Corg (depends on the version), they can be specified as optional arguments if needed
+##Measurment depth: Within this depth the value for Corg and Norg is constant, lower than that declines exponentially. Default is 200 [mm]
+##Naming convention: corg_ts: topsoil organic carbon, norg_ts: topsoil organic nitrogen
+##Only works if corg_ts and norg_ts are supplied and are both > 0 (and not -99.99)
+def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, measurement_depth=200, **kwargs):
 
     dc_soil = pd.read_csv(dcsoil_file_name, sep='\t', header=None)
 
     col_names = ['upper_depth', 'lower_depth', 'bd', 'wcmax', 'wcmin', 'evaporation', 'root_fraction', 'sand', 'clay', 'organic_matter', 'deltamin', 'sks', 'ph']
     dc_soil.columns = col_names
 
-    dc_soil.insert(0, 'depth', value=(dc_soil['lower_depth'] - dc_soil['upper_depth'])*10)
-    dc_soil.insert(1, 'split', value=np.tile(int(5), len(dc_soil)))
+    dc_soil.insert(0, 'depth', value=(dc_soil['lower_depth']*10 - dc_soil['upper_depth']*10))
     dc_soil = dc_soil.drop(['upper_depth', 'lower_depth', 'evaporation', 'root_fraction', 'organic_matter', 'deltamin'], axis='columns')
 
     #Unit conversions
@@ -56,23 +61,26 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, corg_ts, nor
     depths = np.cumsum(dc_soil['depth'])
 
     #Build corg and norg
-    if corg_ts == -99.99:
-        corg = np.tile(-99.99, len(depths))
+    try:
+        corg_ts = kwargs['corg_ts']
+        norg_ts = kwargs['norg_ts']
 
-    elif norg_ts == -99.99:
-        norg = np.tile(-99.99, len(depths))
+        if any([corg_ts <= 0, norg_ts <= 0]):
+            corg = np.tile(-99.99, len(depths))
+            norg = np.tile(-99.99, len(depths))
 
-    elif corg_ts/norg_ts <= 10: #Adjust C:N ratio if lower <= 10
-        norg_ts = corg_ts/10
-        corg = [corg_ts * np.exp((-1 * int(d) + 20) * 0.03) for d in depths]
-        norg = [norg_ts * np.exp((-1 * int(d) + 20) * 0.03) for d in depths]
+        elif corg_ts/norg_ts <= 8: #Threshold for lowest allowed C:N ratio
+            norg_ts = corg_ts/10
 
-    else:
-        corg = [corg_ts * np.exp((-1 * int(d) + 20) * 0.03) for d in depths]
-        norg = [norg_ts * np.exp((-1 * int(d) + 20) * 0.03) for d in depths]
+        else:
+            corg = [max(round(corg_ts * np.exp(-0.003 * max(0, d - measurement_depth)), 8), 0.00001) for d in depths] #Function for C and N gradient with depth
+            norg = [max(round(norg_ts * np.exp(-0.003 * max(0, d - measurement_depth)), 8), 0.00001) for d in depths]
 
-    dc_soil['norg'] = norg
-    dc_soil['corg'] = corg
+        dc_soil['norg'] = norg
+        dc_soil['corg'] = corg
+
+    except:
+        pass
 
     #Write to *site.xml
     top = ET.Element('site')
@@ -95,12 +103,13 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, corg_ts, nor
     print(f'Created file {ldndcsoil_file_name}')
        
 ##Conversion of DayCent *.wth to LDNDC *climate.txt
-##This only works for the JRC .wth files. They have 9 columns, regular DayCent weather files have 7. Code can be edited accordingly
-def convert_wth_climate(wth_file_name, microclimate_file_name, *args):
+## *.wth files from JRC framework have 9 columns, "normal" *.wth files have 7, Number of columns can be specified in the function call
+## *args takes the site100 file, which may contain information about the lat, long, elevation
+def convert_wth_climate(wth_file_name, microclimate_file_name, columns=9, *args):
 
     wth_file = pd.read_csv(wth_file_name, sep='\t', header=None)
-    wth_file = wth_file.iloc[:,:9] #Only the first 7 columns are predefined
-    wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'tavg', 'rad']
+    wth_file = wth_file.iloc[:,:columns] 
+    wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'tavg', 'rad'][:columns]
     wth_file = wth_file.dropna(axis='rows', subset=['day'])
     wth_file = wth_file.astype({'day':int, 'month':int, 'year':int})
 
@@ -110,7 +119,7 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args):
 
     start_time =  f"{wth_file['year'][0]}-{wth_file['month'][0]}-{wth_file['day'][0]}"
 
-    wth_file = wth_file[['tmax', 'tmin', 'tavg', 'prec', 'rad']]
+    wth_file = wth_file.drop(['day', 'month', 'year', 'doy'], axis='columns')
     wth_file = wth_file.round(2)
 
     #Get lat and long from site.100 file
@@ -125,6 +134,7 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args):
         long = site100['Site']['SITLNG']
         elev = site100['Site']['ELEV']
 
+    #There is no tavg in *.wth this just takes the mean of tmin and tmax instead
     #tavg = pd.concat([wth_file['tmax'], wth_file['tmin']], axis=1).agg(np.mean, 1)
     #wth_file = pd.concat([tavg, wth_file], axis='columns')
     #wth_file.columns = ['tavg', 'tmax', 'tmin', 'prec']
@@ -226,17 +236,11 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
 
                         if event == 'FERT':
                             try:
-                                f_amount = float(line.split()[3].split('N')[0][1:])*10000*0.001
-                            
+                                f_amount = float(line.split()[3].split('N')[0][1:])*10000*0.001 #Conversion from g * m^-2 to kg * ha^-1
                             except:
                                 f_amount = -99.99
 
-                            f_type = 'nh4no3'
-
-                            ### For inhibitors
-                            if 'I' in line.split()[3] or 'SU' in line.split()[3]:
-                                f_type = 'ni'
-                            ###
+                            f_type = 'nh4'
 
                             ldndc_event = ET.SubElement(top, 'event')
                             ldndc_event.set('type', 'fertilize')
@@ -246,10 +250,23 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             ldndc_event_info.set('amount', str(f_amount))
                             ldndc_event_info.set('type', f_type)
 
+                            ## For inhibitors
+                            if any(('I' in line.split()[3], 'SU' in line.split()[3])):
+                               ni_amount = str(4.0)
+                               ldndc_event_info.set('ni_amount', ni_amount)
+
                         elif event == 'CROP':
                             crop = line.split()[3]
-                            ldndc_crop = lookup[lookup['dc_crop'] == crop]['ldndc_crop'].iloc[0]
-                            ldndc_initbiom = '100'
+
+                            try:
+                                ldndc_crop = lookup[lookup['dc_crop'] == crop]['ldndc_crop'].iloc[0]
+                                ldndc_initbiom = '100'
+                            
+                            except:
+                                print('CROP NOT IN LOOKUP \n') #Crops often do not appear in lookup file -> throw error and print crop, so it can be added
+                                print(line)
+                                ldndc_crop = '-99.99'
+                                ldndc_initbiom = '-99.99'
 
                         elif event == 'PLTM':
                             ldndc_event = ET.SubElement(top, 'event')
@@ -269,7 +286,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             ldndc_event.set('time', str(date)[:-9])
 
                             ldndc_event_info = ET.SubElement(ldndc_event, 'manure')
-                            ldndc_event_info.set('type', 'farmyard')
+                            ldndc_event_info.set('type', 'slurry')
 
                             type = line.split()[3]
                             c = omad100[type]['ASTGC']
@@ -283,8 +300,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             #Get remains
                             type = line.split()[3]
                             residue = float(harv100[type]['RMVSTR'])
-                            fraction_residue = float(harv100[type]['REMWSD'])
-                            remains = (1-residue) * fraction_residue
+                            remains = str(1 - residue)
                                         
                             ldndc_event = ET.SubElement(top, 'event')
                             ldndc_event.set('type', 'harvest')
@@ -293,7 +309,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             ldndc_event_info = ET.SubElement(ldndc_event, 'harvest')
                             ldndc_event_info.set('type', ldndc_crop)
                             ldndc_event_info.set('name', ldndc_crop)
-                            ldndc_event_info.set('remains', str(1-remains))
+                            ldndc_event_info.set('remains', remains)
 
                         elif event == 'IRIG':
                             if line.split()[3][-2] == 'L':
@@ -358,6 +374,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
 
     print(f'Created file {mana_file_name}')
 
+##Below function are only used in JRC framework
 #Function to create setup file
 def create_setup(run_number, out_file_name): #, site100):
 
@@ -462,8 +479,8 @@ def create_ldndc(run_number, out_file_name, mana_file_name):
 
     print(f'Created file {out_file_name}')
 
-###Function to copy generic airchemistry file (taken from Gebesse site) to local site
-###This needs to be changed to the actual airchemistry once it is available
+###Function to copy generic airchemistry file (taken from Gebesee site) to local site
+###Needs to be changed to the actual airchemistry once it is available
 def create_airchem(run_number):
 
     os.system(f'cp generic_airchem.txt ./test/{run_number}_airchem.txt')
