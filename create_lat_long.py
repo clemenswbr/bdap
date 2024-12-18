@@ -4,8 +4,8 @@ import pandas as pd
 import numpy as np
 import sys
 
-file_in = sys.argv()[1]
-file_out = sys.argv()[2]
+file_in = sys.argv[1]
+file_out = sys.argv[2]
 print(file_in, ' ---> ', file_out)
 
 lat_long = rasterio.open(file_in)
