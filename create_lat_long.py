@@ -27,4 +27,6 @@ for lat_i in range(lat.shape[0]):
 df = pd.DataFrame({'index':np.arange(0, len(lat_t)), 'lat':lat_t, 'long':long_t})
 df.to_csv(file_out)
 
+lat_long.close()
+
 print('DONE')
