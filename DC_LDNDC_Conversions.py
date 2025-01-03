@@ -507,10 +507,10 @@ def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
     with open(airchemistry_file_name, 'w') as f:
 
         f.write('%global\n')
-        f.write(f'\t\ttime = "{datetime[0]}"\n')
+        f.write(f'\ttime = "{datetime[0]}"\n')
         f.write('\n')
         f.write('%airchemistry\n')
-        f.write('\t\tid = 0\n')
+        f.write('\tid = 0\n')
         f.write('\n')
         f.write('%data\n')
 
