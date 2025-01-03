@@ -501,7 +501,7 @@ def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
     #Create CO2 NH4 and NO3 deposition
     co2 = np.tile(405, len(datetime))
     nh4_deposition, no3_deposition = np.tile(total_deposition/2/365, len(datetime)), np.tile(total_deposition/2/365, len(datetime))
-    df_out = pd.DataFrame({'datetime':datetime, 'co2':co2, 'nh4dry':nh4_deposition, 'no3_deposition':no3_deposition})
+    df_out = pd.DataFrame({'*':datetime, 'co2':co2, 'nh4dry':nh4_deposition, 'no3dry':no3_deposition})
 
     #Write to file
     with open(airchemistry_file_name, 'w') as f:
