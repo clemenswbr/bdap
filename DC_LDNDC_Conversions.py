@@ -5,7 +5,7 @@ import re
 import os
 from copy import deepcopy
 
-##Reads a *.100 or similarly structured file into a nested dictionary
+##Reads a *.100 or similarly structured file into a dictionary
 ##Other conversion functions require this structure
 ##Is called by *.wth conversion
 def read_dot100(in_file_name):
@@ -20,16 +20,13 @@ def read_dot100(in_file_name):
     lines = [l.replace('*', '') for l in lines]
     lines = [l.replace("'", "") for l in lines]
     
-
     for line in lines:
 
         if line.split()[0][0].isalpha():
-
-            key = line.split()[0]
-            in_dict[key] = {}
+            continue
 
         else:
-            in_dict[key][line.split()[1]] = float(line.split()[0])
+            in_dict[line.split()[1]] = float(line.split()[0])
 
     return in_dict
 
@@ -126,15 +123,15 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, columns=9, *args)
     if len(args) > 0:
         site100 = read_dot100(args[0])
 
-        site100['Site'].setdefault('SITLAT', -99.99)
-        site100['Site'].setdefault('SITLNG', -99.99)
-        site100['Site'].setdefault('ELEV', -99.99)
+        site100.setdefault('SITLAT', -99.99)
+        site100.setdefault('SITLNG', -99.99)
+        site100.setdefault('ELEV', -99.99)
 
-        lat = site100['Site']['SITLAT']
-        long = site100['Site']['SITLNG']
-        elev = site100['Site']['ELEV']
+        lat = site100['SITLAT']
+        long = site100['SITLNG']
+        elev = site100['ELEV']
 
-    #There is no tavg in *.wth this just takes the mean of tmin and tmax instead
+    #There is no tavg in *.wth. This just takes the mean of tmin and tmax instead
     #tavg = pd.concat([wth_file['tmax'], wth_file['tmin']], axis=1).agg(np.mean, 1)
     #wth_file = pd.concat([tavg, wth_file], axis='columns')
     #wth_file.columns = ['tavg', 'tmax', 'tmin', 'prec']
@@ -481,7 +478,45 @@ def create_ldndc(run_number, out_file_name, mana_file_name):
 
 ###Function to copy generic airchemistry file (taken from Gebesee site) to local site
 ###Needs to be changed to the actual airchemistry once it is available
-def create_airchem(run_number):
+def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
+    #Get combined deposition from *site.100
+    try:
+        site_100_file = read_dot100(site_100_file_name)
+        total_deposition = site_100_file['EPNFA(2)'] / 1000 #Convert from mg/m2 to g/m2
 
-    os.system(f'cp generic_airchem.txt ./test/{run_number}_airchem.txt')
-    print(f'Created file OUT/DAYC/test/{run_number}_airchem.txt')
+    except:
+        total_deposition = -99.99
+
+    #Read *.wth file and create datetime 
+    wth_file = pd.read_csv(wth_file_name, sep='\t', header=None)
+    wth_file = wth_file.iloc[:,:3] 
+    wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'tavg', 'rad'][:3]
+    wth_file = wth_file.dropna(axis='rows', subset=['day'])
+    wth_file = wth_file.astype({'day':int, 'month':int, 'year':int})
+    wth_file['day'] = [str(d).zfill(2) for d in wth_file['day']]
+    wth_file['month'] = [str(d).zfill(2) for d in wth_file['month']]
+     
+    datetime = [f'{wth_file[i]['year']}-{wth_file[i]['month']}-{wth_file[i]['day']}' for i in range(len(wth_file))]
+
+    #Create CO2 NH4 and NO3 deposition
+    co2 = np.tile(405, len(datetime))
+    nh4_deposition, no3_deposition = np.tile(total_deposition/2/365, len(datetime)), np.tile(total_deposition/2/365, len(datetime))
+    df_out = pd.DataFrame({'datetime':datetime, 'co2':co2, 'nh4dry':nh4_deposition, 'no3_deposition':no3_deposition})
+
+    #Write to file
+    with open(airchemistry_file_name, 'w') as f:
+
+        f.write('%global\n')
+        f.write(f'\t\ttime = "{datetime[0]}"\n')
+        f.write('\n')
+        f.write('%airchemistry\n')
+        f.write('\t\tid = 0\n')
+        f.write('\n')
+        f.write('%data\n')
+
+        wth_file.to_csv(f, index=False, header=True, sep='\t')
+    
+    print(f'Created file {airchemistry_file_name}')
+
+    # os.system(f'cp generic_airchem.txt ./test/{run_number}_airchem.txt')
+    # print(f'Created file OUT/DAYC/test/{run_number}_airchem.txt')
