@@ -514,7 +514,7 @@ def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
         f.write('\n')
         f.write('%data\n')
 
-        wth_file.to_csv(f, index=False, header=True, sep='\t')
+        df_out.to_csv(f, index=False, header=True, sep='\t')
     
     print(f'Created file {airchemistry_file_name}')
 
