@@ -496,7 +496,7 @@ def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
     wth_file['day'] = [str(d).zfill(2) for d in wth_file['day']]
     wth_file['month'] = [str(d).zfill(2) for d in wth_file['month']]
      
-    datetime = [f'{wth_file.iloc[i]['year']}-{wth_file.iloc[i]['month']}-{wth_file.iloc[i]['day']}' for i in range(len(wth_file))]
+    datetime = [f"{wth_file.iloc[i]['year']}-{wth_file.iloc[i]['month']}-{wth_file.iloc[i]['day']}" for i in range(len(wth_file))]
 
     #Create CO2 NH4 and NO3 deposition
     co2 = np.tile(405, len(datetime))
