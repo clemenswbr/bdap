@@ -3,61 +3,56 @@ import glob
 import subprocess
 import rasterio
 import pandas as pd
+import os
 
-# country_code = 'DE'
-
-# lat_long = gpd.read_file('../../../NUTS_RG_10M_2024_3035.shp')
-# lat_long = lat_long[lat_long['CNTR_CODE'] == country_code]
-# print(lat_long.index)
-# print(lat_long)
+os.chdir('/eos/jeodpp/data/projects/SOIL-NACA/MODEL4')
 
 #Read N and C data, all the common files and replace no data values
-N_data = rasterio.open('../../../LUCAS_N_EU_SW_kgkg_SSPM.tif')
+N_data = rasterio.open('DE_sim/LUCAS_N_EU_SW_kgkg_SSPM_clip.tif')
 N = N_data.read(1)
 N[N < 0] = -99.99   
 
-C_data = rasterio.open('../../../LUCAS_EU_SOC.tif')
+C_data = rasterio.open('DE_sim/LUCAS_EU_SOC_clip.tif')
 C = C_data.read(1)/1000 #Convert from g/kg to kg/kg
 C[C < 0] = -99.99
 
 lookup = pd.read_csv('dc_ldndc_lookup.csv', sep='\t')
-omad100 = dcldndc.read_dot100('../../../../MODEL/DAYCENT/RUN/DayC/omad.100') 
-harv100 = dcldndc.read_dot100('../../../../MODEL/DAYCENT/RUN/DayC/harv.100')
-irri100 = dcldndc.read_dot100('../../../../MODEL/DAYCENT/RUN/DayC/irri.100')
+omad100 = dcldndc.read_dot100('../MODEL/DAYCENT/RUN/DayC/omad.100') 
+harv100 = dcldndc.read_dot100('../MODEL/DAYCENT/RUN/DayC/harv.100')
+irri100 = dcldndc.read_dot100('../MODEL/DAYCENT/RUN/DayC/irri.100')
 
 #Loop through soil files for simulations
-for run in glob.glob('../meteo*.wth')[:10]:
+for run in glob.glob('OUT/test/site_*_*.100'):
 
     print(run)
 
     row = int(run.split('_')[1])
     col = int(run.split('_')[2])
 
-    print('row ', row, 'col ', col)
+    print('Row:', row, 'Col: ', col)
 
     #Get topsoil organic C and N from additional files
     corg_ts = C[row, col]
     norg_ts = N[row, col]
 
-    print('corg ', corg_ts, 'norg ', norg_ts)
+    print('Corg: ', corg_ts, 'Norg: ', norg_ts)
     
     run_index = f'{row}_{col}'
-    meteo_index = int(run.split('_')[3][:-4])
 
-    print('Soil: ', f'../soils_{run_index}.in', f'./test/{run_index}_site.xml', row, col, 'C', 'N')
-    print('Meteo: ', f'../meteo_{run_index}_{meteo_index}.wth', f'./test/{run_index}_climate.txt', f'../site_{run_index}.100')
-    print('Mana: ', f'../mgt_{run_index}.evt', f'./test/{run_index}_mana.xml', 'omad100', 'harv100', 'irri100', 'lookup')
-    print('Setup: ', run_index, f'./test/{run_index}_setup.xml')
-    print('LDNDC: ', run_index, f'./test/{run_index}.ldndc', f'./test/{run_index}_mana.xml')
-    print('Airchem: ', run_index)
+    print('Soil: ', f'OUT/test/soils_{row}_{col}.in', f'test_ldndc/{row}_{col}_site.xml', corg_ts, norg_ts)
+    print('Meteo: ', f'OUT/test/meteo_{row}_{col}.wth', f'test_ldndc/{row}_{col}_climate.txt', f'../site_{row}_{col}.100')
+    print('Mana: ', f'OUT/mgt_{row}_{col}.evt', f'OUT/test/{row}_{col}_mana.xml', 'omad100', 'harv100', 'irri100', 'lookup')
+    print('Setup: ', row, col, f'OUT/test/{row}_{col}_setup.xml')
+    print('LDNDC: ', row, col, f'OUT/test/{row}_{col}.ldndc', f'OUT/test/{row}_{col}_mana.xml')
+    print('Airchem: ', f'OUT/test/site_{row}_{col}.100', f'OUT/test/{row}_{col}_airchemistry.txt', f'OUT/test/meteo_{row}_{col}.wth')
     print('_______________________________')
 
-    dcldndc.convert_dcsoil_ldndcsoil(f'../soils_{run_index}.in', f'./test/{run_index}_site.xml', corg, norg)
-    dcldndc.convert_wth_climate(f'../meteo_{run_index}_{meteo_index}.wth', f'./test/{run_index}_climate.txt', f'../site_{run_index}.100')
-    dcldndc.convert_evt_mana(f'../mgt_{run_index}.evt', f'./test/{run_index}_mana.xml', omad100, harv100, irri100, lookup)
-    dcldndc.create_setup(run_index, f'./test/{run_index}_setup.xml')
-    dcldndc.create_ldndc(run_index, f'./test/{run_index}.ldndc', f'./test/{run_index}_mana.xml')
-    dcldndc.create_airchem(run_index)
+    dcldndc.convert_dcsoil_ldndcsoil(f'OUT/test/soils_{row}_{col}.in', f'test_ldndc/{row}_{col}_site.xml', corg_ts, norg_ts)
+    dcldndc.convert_wth_climate(f'OUT/test/meteo_{row}_{col}.wth', f'test_ldndc/{row}_{col}_climate.txt', f'../site_{row}_{col}.100')
+    dcldndc.convert_evt_mana(f'OUT/mgt_{row}_{col}.evt', f'OUT/test/{row}_{col}_mana.xml', omad100, harv100, irri100, lookup)
+    dcldndc.create_setup(row, col, f'OUT/test/{row}_{col}_setup.xml')
+    dcldndc.create_ldndc(f'OUT/test/site_{row}_{col}.100', f'OUT/test/{row}_{col}_airchemistry.txt', f'OUT/test/meteo_{row}_{col}.wth')
+    dcldndc.create_airchem(f'OUT/test/site_{row}_{col}.100', f'OUT/test/{row}_{col}_airchemistry.txt', f'OUT/test/meteo_{row}_{col}.wth')
 
 N_data.close()
 C_data.close()

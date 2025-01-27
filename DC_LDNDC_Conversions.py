@@ -373,13 +373,13 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
 
 ##Below function are only used in JRC framework
 #Function to create setup file
-def create_setup(run_number, out_file_name): #, site100):
+def create_setup(row, col, out_file_name): #, site100):
 
     top = ET.Element('ldndcsetup')
 
     setup = ET.SubElement(top, 'setup')
     setup.set('id', '0')
-    setup.set('name', f'{run_number}')
+    setup.set('name', f'{row}_{col}')
 
     #Location
     # site100 = read_dot100(site100)
@@ -401,7 +401,7 @@ def create_setup(run_number, out_file_name): #, site100):
     modulelist = ET.SubElement(mobile, 'modulelist')
 
     #Modulelist
-    ids = ['microclimate:canopyecm', 'watercycle:watercycledndc', 'airchemistry:airchemistrydndc', 'physiology:arabledndc', 'soilchemistry:metrx']
+    ids = ['microclimate:canopyecm', 'watercycle:watercycledndc', 'airchemistry:airchemistrydndc', 'physiology:plamox', 'soilchemistry:metrx']
     timemodes = ['subdaily', 'subdaily', 'subdaily', 'subdaily', 'subdaily']
 
     for id, timemode in zip(ids, timemodes):
@@ -421,7 +421,7 @@ def create_setup(run_number, out_file_name): #, site100):
     print(f'Created file {out_file_name}')
 
 #Function to create *.ldndc file
-def create_ldndc(run_number, out_file_name, mana_file_name):
+def create_ldndc(row, col, out_file_name, mana_file_name):
 
     #Get time for schedule
     mana_file = ET.parse(mana_file_name)
@@ -445,7 +445,7 @@ def create_ldndc(run_number, out_file_name, mana_file_name):
 
     #Sources
     sources = ET.SubElement(input, 'sources')
-    sources.set('sourceprefix', f'{run_number}_')
+    sources.set('sourceprefix', f'{row}_{col}_')
 
     for ins, f_name in zip(['setup', 'site', 'airchemistry', 'climate', 'event'], ['setup.xml', 'site.xml', 'airchem.txt', 'climate.txt', 'mana.xml']):
 
@@ -467,7 +467,7 @@ def create_ldndc(run_number, out_file_name, mana_file_name):
     output = ET.SubElement(ldndcproject, 'output')
 
     sinks = ET.SubElement(output, 'sinks')
-    sinks.set('sinkprefix', f'./{run_number}_output/{run_number}_')
+    sinks.set('sinkprefix', f'./{row}_{col}_output/{row}_{col}_')
 
     #To file
     tree = ET.ElementTree(ldndcproject)
@@ -479,6 +479,7 @@ def create_ldndc(run_number, out_file_name, mana_file_name):
 ###Function to copy generic airchemistry file (taken from Gebesee site) to local site
 ###Needs to be changed to the actual airchemistry once it is available
 def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
+    
     #Get combined deposition from *site.100
     try:
         site_100_file = read_dot100(site_100_file_name)
@@ -518,5 +519,5 @@ def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
     
     print(f'Created file {airchemistry_file_name}')
 
-    # os.system(f'cp generic_airchem.txt ./test/{run_number}_airchem.txt')
-    # print(f'Created file OUT/DAYC/test/{run_number}_airchem.txt')
+    # os.system(f'cp generic_airchem.txt ./test/{row}_{col}_airchem.txt')
+    # print(f'Created file OUT/DAYC/test/{row}_{col}_airchem.txt')
