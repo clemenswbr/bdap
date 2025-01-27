@@ -16,7 +16,7 @@ C_data = rasterio.open('DE_sim/EU_C_kgkg_clip.tif')
 C = C_data.read(1)/1000 #Convert from g/kg to kg/kg
 C[C < 0] = -99.99
 
-lookup = pd.read_csv('dc_ldndc_lookup.csv', sep='\t')
+lookup = pd.read_csv('bdap/dc_ldndc_lookup.csv', sep='\t')
 omad100 = dcldndc.read_dot100('../MODEL/DAYCENT/RUN/DayC/omad.100') 
 harv100 = dcldndc.read_dot100('../MODEL/DAYCENT/RUN/DayC/harv.100')
 irri100 = dcldndc.read_dot100('../MODEL/DAYCENT/RUN/DayC/irri.100')
