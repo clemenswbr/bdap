@@ -8,11 +8,11 @@ import os
 os.chdir('/eos/jeodpp/data/projects/SOIL-NACA/MODEL4')
 
 #Read N and C data, all the common files and replace no data values
-N_data = rasterio.open('DE_sim/LUCAS_N_EU_SW_kgkg_SSPM_clip.tif')
+N_data = rasterio.open('DE_sim/EU_N_kgkg_clip.tif')
 N = N_data.read(1)
 N[N < 0] = -99.99   
 
-C_data = rasterio.open('DE_sim/LUCAS_EU_SOC_clip.tif')
+C_data = rasterio.open('DE_sim/EU_C_kgkg_clip.tif')
 C = C_data.read(1)/1000 #Convert from g/kg to kg/kg
 C[C < 0] = -99.99
 
