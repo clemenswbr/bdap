@@ -27,7 +27,7 @@ for run in glob.glob('OUT/test/site_*_*.100'):
     print(run)
 
     row = int(run.split('_')[1])
-    col = int(run.split('_')[2])
+    col = int(run.split('_')[2]).split('.')[0]
 
     print('Row:', row, 'Col: ', col)
 
