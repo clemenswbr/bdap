@@ -296,7 +296,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                         elif event == 'HARV':
                             #Get remains
                             type = line.split()[3]
-                            residue = float(harv100[type]['RMVSTR'])
+                            residue = float(harv100['RMVSTR'])
                             remains = str(1 - residue)
                                         
                             ldndc_event = ET.SubElement(top, 'event')
