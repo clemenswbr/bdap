@@ -36,7 +36,7 @@ def read_dot100(in_file_name):
 ##Measurment depth: Within this depth the value for Corg and Norg is constant, lower than that declines exponentially. Default is 200 [mm]
 ##Naming convention: corg_ts: topsoil organic carbon, norg_ts: topsoil organic nitrogen
 ##Only works if corg_ts and norg_ts are supplied and are both > 0 (and not -99.99)
-def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, measurement_depth=200, **kwargs):
+def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, **kwargs, measurement_depth=200):
 
     dc_soil = pd.read_csv(dcsoil_file_name, sep='\t', header=None)
 
@@ -102,7 +102,7 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, measurement_
 ##Conversion of DayCent *.wth to LDNDC *climate.txt
 ## *.wth files from JRC framework have 9 columns, "normal" *.wth files have 7, Number of columns can be specified in the function call
 ## *args takes the site100 file, which may contain information about the lat, long, elevation
-def convert_wth_climate(wth_file_name, microclimate_file_name, columns=9, *args):
+def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=9):
 
     wth_file = pd.read_csv(wth_file_name, sep='\t', header=None)
     wth_file = wth_file.iloc[:,:columns] 
@@ -479,7 +479,7 @@ def create_ldndc(row, col, out_file_name, mana_file_name):
 ###Function to copy generic airchemistry file (taken from Gebesee site) to local site
 ###Needs to be changed to the actual airchemistry once it is available
 def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
-    
+
     #Get combined deposition from *site.100
     try:
         site_100_file = read_dot100(site_100_file_name)
