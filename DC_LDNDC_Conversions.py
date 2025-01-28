@@ -288,7 +288,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             type = line.split()[3]
                             c = omad100['type']['ASTGC']
                             c = c/1000 * 10000 #Convert g C m^2 -> kg C ha^2
-                            cn = omad100['type']['ASTREC(1)']
+                            cn = omad100[type]['ASTREC(1)']
                             
                             ldndc_event_info.set('c', str(c))
                             ldndc_event_info.set('cn', str(cn))
