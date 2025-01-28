@@ -421,7 +421,7 @@ def create_setup(row, col, out_file_name): #, site100):
     print(f'Created file {out_file_name}')
 
 #Function to create *.ldndc file
-def create_ldndc(row, col, out_file_name, mana_file_name):
+def create_ldndc(row, col, mana_file_name):
 
     #Get time for schedule
     mana_file = ET.parse(mana_file_name)
@@ -472,7 +472,7 @@ def create_ldndc(row, col, out_file_name, mana_file_name):
     #To file
     tree = ET.ElementTree(ldndcproject)
     ET.indent(tree)
-    tree.write(out_file_name, xml_declaration=True)
+    tree.write(f'{row}_{col}.ldndc', xml_declaration=True)
 
     print(f'Created file {out_file_name}')
 
