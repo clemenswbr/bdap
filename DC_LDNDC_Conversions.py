@@ -330,7 +330,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                                     i_amount = irri100['IRRAUT'] * 10
 
                                 elif irri100[irri_type]['AUIRRI'] == 0.0:
-                                    i_amount = irri100['IRRAMT'] * 10
+                                    i_amount = irri100[irri_type]['IRRAMT'] * 10
 
                                 else:
                                     i_amount = -99.99
