@@ -474,7 +474,7 @@ def create_ldndc(row, col, mana_file_name):
     ET.indent(tree)
     tree.write(f'{row}_{col}.ldndc', xml_declaration=True)
 
-    print(f'Created file {out_file_name}')
+    print(f'Created file {row}_{col}.ldndc')
 
 ###Function to copy generic airchemistry file (taken from Gebesee site) to local site
 ###Needs to be changed to the actual airchemistry once it is available
