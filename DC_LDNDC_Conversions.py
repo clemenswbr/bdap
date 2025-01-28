@@ -123,9 +123,9 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=9)
     if len(args) > 0:
         site100 = read_dot100(args[0])
 
-        site100.setdefault('SITLAT', -99.99)
-        site100.setdefault('SITLNG', -99.99)
-        site100.setdefault('ELEV', -99.99)
+        site100['Site'].setdefault('SITLAT', -99.99)
+        site100['Site'].setdefault('SITLNG', -99.99)
+        site100['Site'].setdefault('ELEV', -99.99)
 
         lat = site100['Site']['SITLAT']
         long = site100['Site']['SITLNG']
