@@ -36,7 +36,7 @@ def read_dot100(in_file_name):
 ##Measurment depth: Within this depth the value for Corg and Norg is constant, lower than that declines exponentially. Default is 200 [mm]
 ##Naming convention: corg_ts: topsoil organic carbon, norg_ts: topsoil organic nitrogen
 ##Only works if corg_ts and norg_ts are supplied and are both > 0 (and not -99.99)
-def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, measurement_depth, **kwargs):
+def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, measurement_depth=200, **kwargs):
 
     dc_soil = pd.read_csv(dcsoil_file_name, sep='\t', header=None)
 
