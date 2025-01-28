@@ -25,6 +25,7 @@ def read_dot100(in_file_name):
         if line.split()[0][0].isalpha():
             key = line.split()[0]
             in_dict[key] = {}
+            print(key)
 
         else:
             in_dict[key][line.split()[1]] = float(line.split()[0])
