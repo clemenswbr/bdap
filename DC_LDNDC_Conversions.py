@@ -326,11 +326,11 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                         elif event == 'IRRI':
                                 i_type = line.split()[3]
                                 
-                                if irri100[i_type]['AUIRRI'] == 2.0:
-                                    i_amount = irri100[i_type]['IRRAUT'] * 10
+                                if irri100['AUIRRI'] == 2.0:
+                                    i_amount = irri100['IRRAUT'] * 10
 
-                                elif irri100[i_type]['AUIRRI'] == 0.0:
-                                    i_amount = irri100[i_type]['IRRAMT'] * 10
+                                elif irri100['AUIRRI'] == 0.0:
+                                    i_amount = irri100['IRRAMT'] * 10
 
                                 else:
                                     i_amount = -99.99
