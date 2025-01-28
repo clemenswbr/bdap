@@ -5,28 +5,28 @@ import re
 import os
 from copy import deepcopy
 
-##Reads a *.100 or similarly structured file into a dictionary
+##Reads a *.100 or similarly structured file into a nested dictionary
 ##Other conversion functions require this structure
 ##Is called by *.wth conversion
 def read_dot100(in_file_name):
 
     in_file = open(in_file_name, 'r')
-    in_dict = {}
-
     lines = in_file.readlines()
     lines = [l.replace('#', '') for l in lines]
     lines = [l.replace('*** ', '') for l in lines]
     lines = [re.sub(' +', ' ', l) for l in lines]
     lines = [l.replace('*', '') for l in lines]
     lines = [l.replace("'", "") for l in lines]
+
+    in_dict = {}
     
     for line in lines:
 
         if line.split()[0][0].isalpha():
-            continue
+            key = line.split()[0]
 
         else:
-            in_dict[line.split()[1]] = float(line.split()[0])
+            in_dict[key][line.split()[1]] = float(line.split()[0])
 
     return in_dict
 
@@ -109,7 +109,6 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=9)
     wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'tavg', 'rad'][:columns]
     wth_file = wth_file.dropna(axis='rows', subset=['day'])
     wth_file = wth_file.astype({'day':int, 'month':int, 'year':int})
-
     wth_file['prec'] = wth_file['prec']/10 #Convert from cm to mm
     wth_file['day'] = [str(d).zfill(2) for d in wth_file['day']]
     wth_file['month'] = [str(d).zfill(2) for d in wth_file['month']]
@@ -127,9 +126,9 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=9)
         site100.setdefault('SITLNG', -99.99)
         site100.setdefault('ELEV', -99.99)
 
-        lat = site100['SITLAT']
-        long = site100['SITLNG']
-        elev = site100['ELEV']
+        lat = site100['Site']['SITLAT']
+        long = site100['Site']['SITLNG']
+        elev = site100['Site']['ELEV']
 
     #There is no tavg in *.wth. This just takes the mean of tmin and tmax instead
     #tavg = pd.concat([wth_file['tmax'], wth_file['tmin']], axis=1).agg(np.mean, 1)
@@ -162,6 +161,8 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=9)
 
 #Function to convert DayCent *.sch/*.evt file to LDNDC *.mana file
 def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, lookup):
+
+    f_type = 'nh4'
 
     with open(sch_file_name, 'r') as events_in, open(mana_file_name, 'wb') as events_out:
 
@@ -237,8 +238,6 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             except:
                                 f_amount = -99.99
 
-                            f_type = 'nh4'
-
                             ldndc_event = ET.SubElement(top, 'event')
                             ldndc_event.set('type', 'fertilize')
                             ldndc_event.set('time', str(date)[:-9])
@@ -286,9 +285,9 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             ldndc_event_info.set('type', 'slurry')
 
                             type = line.split()[3]
-                            c = omad100['ASTGC']
+                            c = omad100['type']['ASTGC']
                             c = c/1000 * 10000 #Convert g C m^2 -> kg C ha^2
-                            cn = omad100['ASTREC(1)']
+                            cn = omad100['type']['ASTREC(1)']
                             
                             ldndc_event_info.set('c', str(c))
                             ldndc_event_info.set('cn', str(cn))
@@ -296,7 +295,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                         elif event == 'HARV':
                             #Get remains
                             type = line.split()[3]
-                            residue = float(harv100['RMVSTR'])
+                            residue = float(harv100[type]['RMVSTR'])
                             remains = str(1 - residue)
                                         
                             ldndc_event = ET.SubElement(top, 'event')
@@ -324,12 +323,12 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                                 ldndc_event_info.set('amount', str(i_amount))
 
                         elif event == 'IRRI':
-                                i_type = line.split()[3]
+                                irri_type = line.split()[3]
                                 
-                                if irri100['AUIRRI'] == 2.0:
+                                if irri100[irri_type]['AUIRRI'] == 2.0:
                                     i_amount = irri100['IRRAUT'] * 10
 
-                                elif irri100['AUIRRI'] == 0.0:
+                                elif irri100[irri_type]['AUIRRI'] == 0.0:
                                     i_amount = irri100['IRRAMT'] * 10
 
                                 else:
@@ -371,7 +370,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
 
     print(f'Created file {mana_file_name}')
 
-##Below function are only used in JRC framework
+##Functions below are only used in JRC framework
 #Function to create setup file
 def create_setup(row, col, out_file_name): #, site100):
 
@@ -483,7 +482,7 @@ def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
     #Get combined deposition from *site.100
     try:
         site_100_file = read_dot100(site_100_file_name)
-        total_deposition = site_100_file['EPNFA(2)'] / 1000 #Convert from mg/m2 to g/m2
+        total_deposition = site_100_file['External']['EPNFA(2)'] / 1000 #Convert from mg/m2 to g/m2
 
     except:
         total_deposition = -99.99
@@ -518,6 +517,3 @@ def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
         df_out.to_csv(f, index=False, header=True, sep='\t')
     
     print(f'Created file {airchemistry_file_name}')
-
-    # os.system(f'cp generic_airchem.txt ./test/{row}_{col}_airchem.txt')
-    # print(f'Created file OUT/DAYC/test/{row}_{col}_airchem.txt')
