@@ -55,10 +55,11 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, measurement_
         if any([corg_ts <= 0, norg_ts <= 0]):
             corg = np.tile(-99.99, len(depths))
             norg = np.tile(-99.99, len(depths))
-        elif corg_ts/norg_ts <= 8: #Threshold for lowest allowed C:N ratio
+        elif corg_ts/norg_ts <= 8: #Threshold for lowest allowed C:N ratio; adjust norg_ts
             norg_ts = corg_ts/10
         else:
-            corg = [max(round(corg_ts * np.exp(-0.003 * max(0, d - measurement_depth)), 8), 0.00001) for d in depths] #Function for C and N gradient with depth
+            #Gradient function for organic C and N with depth
+            corg = [max(round(corg_ts * np.exp(-0.003 * max(0, d - measurement_depth)), 8), 0.00001) for d in depths]
             norg = [max(round(norg_ts * np.exp(-0.003 * max(0, d - measurement_depth)), 8), 0.00001) for d in depths]
         dc_soil['norg'] = norg
         dc_soil['corg'] = corg
@@ -133,29 +134,31 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=9)
 #Function to convert DayCent *.sch/*.evt file to LDNDC *.mana file
 def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, lookup):
     #Defaults
-    f_type = 'nh4'
+    fert_type = 'nh4' #Type of fertilizer in FERT event
+    manure_type = 'slurry' #Type of manure to be applied
+    till_depth = 0.2 #Tillage depth
+    ldndc_initbiom = '100' #Initial biomass (not crop specific)
+    ni_amount = str(4.0) #NI amount for nitrification inhibitors
 
     with open(sch_file_name, 'r') as events_in, open(mana_file_name, 'wb') as events_out:
         in_lines = events_in.readlines()
         in_lines = [re.sub(' +', ' ', il) for il in in_lines]
         in_lines = [il.lstrip(' ') for il in in_lines]
+        in_lines = [il for il in in_lines if not il.startswith('#') and len(il) > 1]
 
         in_block_lines = []
         block_last_years = []
         block_start_years = []
         start = 0
 
-        in_lines = [il for il in in_lines if not il.startswith('#') and len(il) > 1]
-
         for i, line in enumerate(in_lines):
             if 'Option' in line:
                 in_lines = in_lines[i:]
+                break
 
         for i, line in enumerate(in_lines):
-            if 'Output starting year' in line:
+            if any(['Output starting year' in line, 'Last year' in line]):
                 block_start_years.append(int(line.split()[0]))
-            elif 'Last year' in line:
-                block_last_years.append(int(line.split()[0]))
             elif '-999 -999 X' in line:
                 in_block_lines.append(in_lines[start:i])
                 start = i + 1
@@ -168,19 +171,13 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
 
             while count_year < block_last_year:
                 for line in block:
-                    if len(line.split()) <= 1:
+                    if len(line.split() < 3):
                         continue
-                    elif '.wth' in line:
-                        continue
-                    elif line.split()[1].isalpha():
+                    if any([line.split()[0].isalpha(), line.split()[1].isalpha()]):
                         continue
                     else:
                         event = line.split()[2]
-                        try:
-                            block_year = int(line.split()[0])
-                        except:
-                            continue
-
+                        block_year = int(line.split()[0])
                         doy = int(line.split()[1])
                         evt_year = count_year + block_year - 1
                         date = pd.to_datetime(pd.to_datetime(f'{evt_year}-01-01') + pd.Timedelta(days=doy-1))
@@ -196,18 +193,15 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             ldndc_event.set('time', str(date)[:-9])
                             ldndc_event_info = ET.SubElement(ldndc_event, 'fertilize')
                             ldndc_event_info.set('amount', str(f_amount))
-                            ldndc_event_info.set('type', f_type)
-
-                            ## For inhibitors
+                            ldndc_event_info.set('type', fert_type)
+                            # For inhibitors
                             if any(('I' in line.split()[3], 'SU' in line.split()[3])):
-                               ni_amount = str(4.0)
                                ldndc_event_info.set('ni_amount', ni_amount)
                         #Get crop for planting event
                         elif event == 'CROP':
                             crop = line.split()[3]
                             try:
                                 ldndc_crop = lookup[lookup['dc_crop'] == crop]['ldndc_crop'].iloc[0]
-                                ldndc_initbiom = '100'
                             except:
                                 print('CROP NOT IN LOOKUP \n') #Crops often do not appear in lookup file -> throw error and print crop, so it can be added
                                 print(line)
@@ -223,18 +217,20 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             ldndc_event_info.set('name', ldndc_crop)
                             ldndc_event_subinfo = ET.SubElement(ldndc_event_info, 'crop')
                             ldndc_event_subinfo.set('initialbiomass', ldndc_initbiom)
+                        #Organic matter input (manure)
                         elif event == 'OMAD':
                             ldndc_event = ET.SubElement(top, 'event')
                             ldndc_event.set('type', 'manure')
                             ldndc_event.set('time', str(date)[:-9])
                             ldndc_event_info = ET.SubElement(ldndc_event, 'manure')
-                            ldndc_event_info.set('type', 'slurry')
+                            ldndc_event_info.set('type', manure_type)
                             type = line.split()[3]
                             c = omad100[type]['ASTGC']
                             c = c/1000 * 10000 #Convert g C m^2 -> kg C ha^2
                             cn = omad100[type]['ASTREC(1)']
                             ldndc_event_info.set('c', str(c))
                             ldndc_event_info.set('cn', str(cn))
+                        #Harvest event
                         elif event == 'HARV':
                             #Get remains
                             type = line.split()[3]
@@ -247,6 +243,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             ldndc_event_info.set('type', ldndc_crop)
                             ldndc_event_info.set('name', ldndc_crop)
                             ldndc_event_info.set('remains', remains)
+                        #Irrigation event
                         elif event == 'IRIG':
                             if line.split()[3][-2] == 'L':
                                 continue
@@ -258,6 +255,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                                 ldndc_event.set('time', str(date)[:-9])
                                 ldndc_event_info = ET.SubElement(ldndc_event, 'irrigate')
                                 ldndc_event_info.set('amount', str(i_amount))
+                        #Irrigation event
                         elif event == 'IRRI':
                                 irri_type = line.split()[3]
 
@@ -273,25 +271,23 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                                 ldndc_event.set('time', str(date)[:-9])
                                 ldndc_event_info = ET.SubElement(ldndc_event, 'irrigate')
                                 ldndc_event_info.set('amount', str(i_amount))
+                        #Cultivation event; is always till
                         elif event == 'CULT':
                             if line.split()[3] == 'HERB':
                                 continue
                             else:
-                                cult_depth = 0.2
                                 ldndc_event = ET.SubElement(top, 'event')
                                 ldndc_event.set('type', 'till')
                                 ldndc_event.set('time', str(date)[:-9])
                                 ldndc_event_info = ET.SubElement(ldndc_event, 'till')
-                                ldndc_event_info.set('depth', str(cult_depth))
+                                ldndc_event_info.set('depth', str(till_depth))
                         else:
                             continue
                 
                 count_year += int(line.split()[0])
-
         tree = ET.ElementTree(top)
         ET.indent(tree)
         tree.write(mana_file_name, xml_declaration=True)
-
     events_in.close()
     events_out.close()
 
@@ -303,20 +299,9 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
 def create_setup(row, col, out_file_name): #, site100):
 
     top = ET.Element('ldndcsetup')
-
     setup = ET.SubElement(top, 'setup')
     setup.set('id', '0')
     setup.set('name', f'{row}_{col}')
-
-    #Location
-    # site100 = read_dot100(site100)
-
-    # lat = site100['SITLAT']
-    # long = site100['SITLONG']
-
-    # location = ET.SubElement(setup, 'location')
-    # location.set('latitude', lat)
-    # location.set('longitude', long)
 
     #Models
     models = ET.SubElement(setup, 'models')
