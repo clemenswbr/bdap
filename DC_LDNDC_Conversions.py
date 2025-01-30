@@ -173,7 +173,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
 
             while count_year < block_last_year:
                 for line in block:
-                    if len(line.split() < 3):
+                    if len(line.split()) < 3:
                         continue
                     if any([line.split()[0].isalpha(), line.split()[1].isalpha()]):
                         continue
