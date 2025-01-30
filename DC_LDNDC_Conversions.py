@@ -137,7 +137,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
     fert_type = 'nh4' #Type of fertilizer in FERT event
     manure_type = 'slurry' #Type of manure to be applied
     till_depth = 0.2 #Tillage depth
-    ldndc_initbiom = '100' #Initial biomass (not crop specific)
+    ldndc_initbiom = str(100) #Initial biomass (not crop specific)
     ni_amount = str(4.0) #NI amount for nitrification inhibitors
 
     with open(sch_file_name, 'r') as events_in, open(mana_file_name, 'wb') as events_out:
@@ -157,8 +157,10 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                 break
 
         for i, line in enumerate(in_lines):
-            if any(['Output starting year' in line, 'Last year' in line]):
+            if 'Output starting year' in line:
                 block_start_years.append(int(line.split()[0]))
+            elif 'Last year' in line:
+                block_last_years.append(int(line.split()[0]))
             elif '-999 -999 X' in line:
                 in_block_lines.append(in_lines[start:i])
                 start = i + 1
