@@ -5,11 +5,11 @@ import re
 import os
 from copy import deepcopy
 
-##Reads a *.100 or similarly structured file into a nested dictionary
+
+##Reads a *.100 (or similarly structured) file into a nested dictionary
 ##Other conversion functions require this structure
 ##Is called by *.wth conversion
 def read_dot100(in_file_name):
-
     in_file = open(in_file_name, 'r')
     lines = in_file.readlines()
     lines = [l.replace('#', '') for l in lines]
@@ -17,15 +17,12 @@ def read_dot100(in_file_name):
     lines = [re.sub(' +', ' ', l) for l in lines]
     lines = [l.replace('*', '') for l in lines]
     lines = [l.replace("'", "") for l in lines]
-
     in_dict = {}
     
     for line in lines:
-
         if line.split()[0][0].isalpha():
             key = line.split()[0]
             in_dict[key] = {}
-
         else:
             in_dict[key][line.split()[1]] = float(line.split()[0])
 
@@ -38,23 +35,16 @@ def read_dot100(in_file_name):
 ##Naming convention: corg_ts: topsoil organic carbon, norg_ts: topsoil organic nitrogen
 ##Only works if corg_ts and norg_ts are supplied and are both > 0 (and not -99.99)
 def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, measurement_depth=200, **kwargs):
-
+    #Read DayCent soil file
     dc_soil = pd.read_csv(dcsoil_file_name, sep='\t', header=None)
-
-    col_names = ['upper_depth', 'lower_depth', 'bd', 'wcmax', 'wcmin', 'evaporation', 'root_fraction', 'sand', 'clay', 'organic_matter', 'deltamin', 'sks', 'ph']
-    dc_soil.columns = col_names
-
+    dc_soil.columns = ['upper_depth', 'lower_depth', 'bd', 'wcmax', 'wcmin', 'evaporation', 'root_fraction', 'sand', 'clay', 'organic_matter', 'deltamin', 'sks', 'ph']
     dc_soil.insert(0, 'depth', value=(dc_soil['lower_depth']*10 - dc_soil['upper_depth']*10))
     dc_soil = dc_soil.drop(['upper_depth', 'lower_depth', 'evaporation', 'root_fraction', 'organic_matter', 'deltamin'], axis='columns')
-
-    #Unit conversions
     #Convert wcmax, wcmin cm^3/cm^3 -> dm^3/m^3
     dc_soil['wcmax'] = dc_soil['wcmax']*1000
     dc_soil['wcmin'] = dc_soil['wcmin']*1000 
-
     #Convert sks cm/sec -> cm/min
     dc_soil['sks'] = dc_soil['sks']*60
-
     #Add norg and corg from LUCAS data
     depths = np.cumsum(dc_soil['depth'])
 
@@ -62,22 +52,17 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, measurement_
     try:
         corg_ts = kwargs['corg_ts']
         norg_ts = kwargs['norg_ts']
-
         if any([corg_ts <= 0, norg_ts <= 0]):
             corg = np.tile(-99.99, len(depths))
             norg = np.tile(-99.99, len(depths))
-
         elif corg_ts/norg_ts <= 8: #Threshold for lowest allowed C:N ratio
             norg_ts = corg_ts/10
-
         else:
             corg = [max(round(corg_ts * np.exp(-0.003 * max(0, d - measurement_depth)), 8), 0.00001) for d in depths] #Function for C and N gradient with depth
             norg = [max(round(norg_ts * np.exp(-0.003 * max(0, d - measurement_depth)), 8), 0.00001) for d in depths]
-
         dc_soil['norg'] = norg
         dc_soil['corg'] = corg
-
-    except:
+    except:  
         pass
 
     #Write to *site.xml
@@ -86,116 +71,91 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, measurement_
     layers = ET.SubElement(soil, 'layers')
 
     for row in range(len(dc_soil)):
-        
         stratum = dc_soil.iloc[row]
         stratum_ldndc = ET.SubElement(layers, 'layer')
-
         for par, value in zip(dc_soil.columns, stratum):
-
             stratum_ldndc.set(par, str(value))
 
     tree = ET.ElementTree(top)
     ET.indent(tree)
-
     tree.write(ldndcsoil_file_name, xml_declaration=True)
     print(f'Created file {ldndcsoil_file_name}')
-       
+
+
 ##Conversion of DayCent *.wth to LDNDC *climate.txt
 ## *.wth files from JRC framework have 9 columns, "normal" *.wth files have 7, Number of columns can be specified in the function call
 ## *args takes the site100 file, which may contain information about the lat, long, elevation
 def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=9):
-
+    #Read DayCent *.wth file
     wth_file = pd.read_csv(wth_file_name, sep='\t', header=None)
     wth_file = wth_file.iloc[:,:columns] 
     wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'tavg', 'rad'][:columns]
-    wth_file = wth_file.dropna(axis='rows', subset=['day'])
+    #wth_file = wth_file.dropna(axis='rows', subset=['day'])
     wth_file = wth_file.astype({'day':int, 'month':int, 'year':int})
     wth_file['prec'] = wth_file['prec']/10 #Convert from cm to mm
     wth_file['day'] = [str(d).zfill(2) for d in wth_file['day']]
     wth_file['month'] = [str(d).zfill(2) for d in wth_file['month']]
-
     start_time =  f"{wth_file['year'][0]}-{wth_file['month'][0]}-{wth_file['day'][0]}"
-
     wth_file = wth_file.drop(['day', 'month', 'year', 'doy'], axis='columns')
     wth_file = wth_file.round(2)
 
     #Get lat and long from site.100 file
     if len(args) > 0:
         site100 = read_dot100(args[0])
-
         site100['Site'].setdefault('SITLAT', -99.99)
         site100['Site'].setdefault('SITLNG', -99.99)
         site100['Site'].setdefault('ELEV', -99.99)
-
         lat = site100['Site']['SITLAT']
         long = site100['Site']['SITLNG']
         elev = site100['Site']['ELEV']
-
-    #There is no tavg in *.wth. This just takes the mean of tmin and tmax instead
-    #tavg = pd.concat([wth_file['tmax'], wth_file['tmin']], axis=1).agg(np.mean, 1)
-    #wth_file = pd.concat([tavg, wth_file], axis='columns')
-    #wth_file.columns = ['tavg', 'tmax', 'tmin', 'prec']
     
     wth_file = wth_file.reset_index(drop=True)
 
     with open(microclimate_file_name, 'w') as f:
-
         f.write('%global\n')
         f.write(f'        time = "{start_time}/1"\n')
         f.write('\n')
         f.write('%climate\n')
         f.write('        id = 0\n')
         f.write('\n')
-
         if len(args) > 0:
             f.write('%attributes\n')
             f.write(f'        elevation = "{elev}"\n')
             f.write(f'        latitude = "{lat}"\n')
             f.write(f'        longitude = "{long}"\n')
-            f.write('\n')
-            
+            f.write('\n')         
         f.write('%data\n')
-
         wth_file.to_csv(f, index=False, header=True, sep='\t')
-    
+
     print(f'Created file {microclimate_file_name}')
+
 
 #Function to convert DayCent *.sch/*.evt file to LDNDC *.mana file
 def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, lookup):
-
+    #Defaults
     f_type = 'nh4'
 
     with open(sch_file_name, 'r') as events_in, open(mana_file_name, 'wb') as events_out:
-
         in_lines = events_in.readlines()
-        in_lines = [re.sub(' +', ' ', l) for l in in_lines]
-        in_lines = [l.lstrip(' ') for l in in_lines]
+        in_lines = [re.sub(' +', ' ', il) for il in in_lines]
+        in_lines = [il.lstrip(' ') for il in in_lines]
 
         in_block_lines = []
         block_last_years = []
         block_start_years = []
         start = 0
 
-        for line in in_lines:
-
-            if line.startswith('#'):
-                in_lines.remove(line)
-
-            if len(line) <= 1:
-                in_lines.remove(line)
+        in_lines = [il for il in in_lines if il.startswith('#') and len(il) > 1]
 
         for i, line in enumerate(in_lines):
-
             if 'Option' in line:
                 in_lines = in_lines[i:]
 
         for i, line in enumerate(in_lines):
             if 'Output starting year' in line:
                 block_start_years.append(int(line.split()[0]))
-
-            if 'Last year' in line:
+            elif 'Last year' in line:
                 block_last_years.append(int(line.split()[0]))
-
             elif '-999 -999 X' in line:
                 in_block_lines.append(in_lines[start:i])
                 start = i + 1
@@ -203,26 +163,19 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
         top = ET.Element('event')
 
         for i, block in enumerate(in_block_lines):
-
             block_last_year = block_last_years[i]
             count_year = block_start_years[i]
 
             while count_year < block_last_year:
-
                 for line in block:
-
                     if len(line.split()) <= 1:
                         continue
-
                     elif '.wth' in line:
                         continue
-                    
                     elif line.split()[1].isalpha():
                         continue
-
                     else:
                         event = line.split()[2]
-
                         try:
                             block_year = int(line.split()[0])
                         except:
@@ -230,7 +183,6 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
 
                         doy = int(line.split()[1])
                         evt_year = count_year + block_year - 1
-
                         date = pd.to_datetime(pd.to_datetime(f'{evt_year}-01-01') + pd.Timedelta(days=doy-1))
 
                         if event == 'FERT':
@@ -242,7 +194,6 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             ldndc_event = ET.SubElement(top, 'event')
                             ldndc_event.set('type', 'fertilize')
                             ldndc_event.set('time', str(date)[:-9])
-
                             ldndc_event_info = ET.SubElement(ldndc_event, 'fertilize')
                             ldndc_event_info.set('amount', str(f_amount))
                             ldndc_event_info.set('type', f_type)
@@ -251,112 +202,87 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             if any(('I' in line.split()[3], 'SU' in line.split()[3])):
                                ni_amount = str(4.0)
                                ldndc_event_info.set('ni_amount', ni_amount)
-
+                        #Get crop for planting event
                         elif event == 'CROP':
                             crop = line.split()[3]
-
                             try:
                                 ldndc_crop = lookup[lookup['dc_crop'] == crop]['ldndc_crop'].iloc[0]
                                 ldndc_initbiom = '100'
-                            
                             except:
                                 print('CROP NOT IN LOOKUP \n') #Crops often do not appear in lookup file -> throw error and print crop, so it can be added
                                 print(line)
                                 ldndc_crop = '-99.99'
                                 ldndc_initbiom = '-99.99'
-
+                        #Plant event
                         elif event == 'PLTM':
                             ldndc_event = ET.SubElement(top, 'event')
                             ldndc_event.set('type', 'plant')
                             ldndc_event.set('time', str(date)[:-9])
-
                             ldndc_event_info = ET.SubElement(ldndc_event, 'plant')
                             ldndc_event_info.set('type', ldndc_crop)
                             ldndc_event_info.set('name', ldndc_crop)
-                            
                             ldndc_event_subinfo = ET.SubElement(ldndc_event_info, 'crop')
                             ldndc_event_subinfo.set('initialbiomass', ldndc_initbiom)
-
                         elif event == 'OMAD':
                             ldndc_event = ET.SubElement(top, 'event')
                             ldndc_event.set('type', 'manure')
                             ldndc_event.set('time', str(date)[:-9])
-
                             ldndc_event_info = ET.SubElement(ldndc_event, 'manure')
                             ldndc_event_info.set('type', 'slurry')
-
                             type = line.split()[3]
                             c = omad100[type]['ASTGC']
                             c = c/1000 * 10000 #Convert g C m^2 -> kg C ha^2
                             cn = omad100[type]['ASTREC(1)']
-                            
                             ldndc_event_info.set('c', str(c))
                             ldndc_event_info.set('cn', str(cn))
-
                         elif event == 'HARV':
                             #Get remains
                             type = line.split()[3]
                             residue = float(harv100[type]['RMVSTR'])
                             remains = str(1 - residue)
-                                        
                             ldndc_event = ET.SubElement(top, 'event')
                             ldndc_event.set('type', 'harvest')
                             ldndc_event.set('time', str(date)[:-9])
-
                             ldndc_event_info = ET.SubElement(ldndc_event, 'harvest')
                             ldndc_event_info.set('type', ldndc_crop)
                             ldndc_event_info.set('name', ldndc_crop)
                             ldndc_event_info.set('remains', remains)
-
                         elif event == 'IRIG':
                             if line.split()[3][-2] == 'L':
                                 continue
-                            
                             else:
                                 i_amount = float(line.split()[3].split(',')[-1][:-1])
                                 i_amount = i_amount * 10 #Convert from cm to mm    
-
                                 ldndc_event = ET.SubElement(top, 'event')
                                 ldndc_event.set('type', 'irrigate')
                                 ldndc_event.set('time', str(date)[:-9])
-
                                 ldndc_event_info = ET.SubElement(ldndc_event, 'irrigate')
                                 ldndc_event_info.set('amount', str(i_amount))
-
                         elif event == 'IRRI':
                                 irri_type = line.split()[3]
-                                
+
                                 if irri100[irri_type]['AUIRRI'] == 2.0:
                                     i_amount = irri100['IRRAUT'] * 10
-
                                 elif irri100[irri_type]['AUIRRI'] == 0.0:
                                     i_amount = irri100[irri_type]['IRRAMT'] * 10
-
                                 else:
                                     i_amount = -99.99
 
                                 ldndc_event = ET.SubElement(top, 'event')
                                 ldndc_event.set('type', 'irrigate')
                                 ldndc_event.set('time', str(date)[:-9])
-
                                 ldndc_event_info = ET.SubElement(ldndc_event, 'irrigate')
                                 ldndc_event_info.set('amount', str(i_amount))
-
                         elif event == 'CULT':
-
                             if line.split()[3] == 'HERB':
                                 continue
-
                             else:
                                 cult_depth = 0.2
-
                                 ldndc_event = ET.SubElement(top, 'event')
                                 ldndc_event.set('type', 'till')
                                 ldndc_event.set('time', str(date)[:-9])
-
                                 ldndc_event_info = ET.SubElement(ldndc_event, 'till')
                                 ldndc_event_info.set('depth', str(cult_depth))
-                        
                         else:
                             continue
                 
@@ -370,6 +296,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
     events_out.close()
 
     print(f'Created file {mana_file_name}')
+
 
 ##Functions below are only used in JRC framework
 #Function to create setup file
@@ -475,6 +402,7 @@ def create_ldndc(row, col, mana_file_name):
     tree.write(f'{row}_{col}.ldndc', xml_declaration=True)
 
     print(f'Created file {row}_{col}.ldndc')
+
 
 ###Function to copy generic airchemistry file (taken from Gebesee site) to local site
 ###Needs to be changed to the actual airchemistry once it is available
