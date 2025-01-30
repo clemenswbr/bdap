@@ -145,7 +145,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
         block_start_years = []
         start = 0
 
-        in_lines = [il for il in in_lines if il.startswith('#') and len(il) > 1]
+        in_lines = [il for il in in_lines if not il.startswith('#') and len(il) > 1]
 
         for i, line in enumerate(in_lines):
             if 'Option' in line:
@@ -349,7 +349,6 @@ def create_setup(row, col, out_file_name): #, site100):
 
 #Function to create *.ldndc file
 def create_ldndc(row, col, mana_file_name):
-
     #Get time for schedule
     mana_file = ET.parse(mana_file_name)
     start = mana_file.findall('event')[0].attrib['time'] 
