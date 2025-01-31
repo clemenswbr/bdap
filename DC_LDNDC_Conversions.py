@@ -299,34 +299,28 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
 ##Functions below are only used in JRC framework
 #Function to create setup file
 def create_setup(row, col, setup_file_name): #, site100):
-
     top = ET.Element('ldndcsetup')
     setup = ET.SubElement(top, 'setup')
     setup.set('id', '0')
     setup.set('name', f'{row}_{col}')
-
     #Models
     models = ET.SubElement(setup, 'models')
     model = ET.SubElement(models, 'model')
     model.set('id', '_MoBiLE')
-
     #Mobile
     mobile = ET.SubElement(setup, 'mobile')
     modulelist = ET.SubElement(mobile, 'modulelist')
-
     #Modulelist
     ids = ['microclimate:canopyecm', 'watercycle:watercycledndc', 'airchemistry:airchemistrydndc', 'physiology:plamox', 'soilchemistry:metrx']
     timemodes = ['subdaily', 'subdaily', 'subdaily', 'subdaily', 'subdaily']
 
     for id, timemode in zip(ids, timemodes):
-
         module = ET.SubElement(modulelist, 'module')
         module.set('id', id)
         module.set('timemode', timemode)
 
     output = ET.SubElement(modulelist, 'module')
     output.set('id', 'output:soilchemistry:yearly')
-
     #To file
     tree = ET.ElementTree(top)
     ET.indent(tree)
@@ -340,28 +334,22 @@ def create_ldndc(row, col, ldndc_file_name, mana_file_name):
     mana_file = ET.parse(mana_file_name)
     start = mana_file.findall('event')[0].attrib['time'] 
     end = mana_file.findall('event')[-1].attrib['time']
-
     timespan = int(end[:4]) - int(start[:4])
     time = f'{start[:4]}-01-01/24 -> +{timespan}-0-0'
-    
     #LDNDC project
     ldndcproject = ET.Element('ldndcproject')
     ldndcproject.set('PackageMinimumVersionRequired', '1.3')
     ldndcproject.set('XPackageVersionRequired', '1.2')
-
     #Schedule
     schedule = ET.SubElement(ldndcproject, 'schedule')
     schedule.set('time', time)
-
     #Input
     input = ET.SubElement(ldndcproject, 'input')
-
     #Sources
     sources = ET.SubElement(input, 'sources')
     sources.set('sourceprefix', f'{row}_{col}_')
 
     for ins, f_name in zip(['setup', 'site', 'airchemistry', 'climate', 'event'], ['setup.xml', 'site.xml', 'airchem.txt', 'climate.txt', 'mana.xml']):
-
         source = ET.SubElement(sources, ins)
         source.set('source', f'{f_name}')
 
@@ -369,19 +357,14 @@ def create_ldndc(row, col, ldndc_file_name, mana_file_name):
     attributes = ET.SubElement(input, 'attributes')
     attributes.set('use', '0')
     attributes.set('endless', '0')
-
     airchemistry = ET.SubElement(attributes, 'airchemistry')
     airchemistry.set('endless', 'yes')
-
     climate = ET.SubElement(attributes, 'climate')
     climate.set('endless', 'yes')
-
     #Output
     output = ET.SubElement(ldndcproject, 'output')
-
     sinks = ET.SubElement(output, 'sinks')
     sinks.set('sinkprefix', f'./{row}_{col}_output/{row}_{col}_')
-
     #To file
     tree = ET.ElementTree(ldndcproject)
     ET.indent(tree)
@@ -393,12 +376,10 @@ def create_ldndc(row, col, ldndc_file_name, mana_file_name):
 ###Function to copy generic airchemistry file (taken from Gebesee site) to local site
 ###Needs to be changed to the actual airchemistry once it is available
 def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
-
     #Get combined deposition from *site.100
     try:
         site_100_file = read_dot100(site_100_file_name)
         total_deposition = site_100_file['External']['EPNFA(2)'] / 1000 #Convert from mg/m2 to g/m2
-
     except:
         total_deposition = -99.99
 
@@ -410,17 +391,13 @@ def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
     wth_file = wth_file.astype({'day':int, 'month':int, 'year':int})
     wth_file['day'] = [str(d).zfill(2) for d in wth_file['day']]
     wth_file['month'] = [str(d).zfill(2) for d in wth_file['month']]
-     
     datetime = [f"{wth_file.iloc[i]['year']}-{wth_file.iloc[i]['month']}-{wth_file.iloc[i]['day']}" for i in range(len(wth_file))]
-
     #Create CO2 NH4 and NO3 deposition
     co2 = np.tile(405, len(datetime))
     nh4_deposition, no3_deposition = np.tile(total_deposition/2/365, len(datetime)), np.tile(total_deposition/2/365, len(datetime))
     df_out = pd.DataFrame({'*':datetime, 'co2':co2, 'nh4dry':nh4_deposition, 'no3dry':no3_deposition})
-
     #Write to file
     with open(airchemistry_file_name, 'w') as f:
-
         f.write('%global\n')
         f.write(f'\ttime = "{datetime[0]}"\n')
         f.write('\n')
@@ -428,7 +405,6 @@ def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
         f.write('\tid = 0\n')
         f.write('\n')
         f.write('%data\n')
-
         df_out.to_csv(f, index=False, header=True, sep='\t')
     
     print(f'Created file {airchemistry_file_name}')
