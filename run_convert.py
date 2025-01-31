@@ -52,7 +52,7 @@ for run in glob.glob('OUT/test/site_*_*.100'):
     dcldndc.convert_evt_mana(f'OUT/test/mgt_{row}_{col}.evt', f'test_ldndc/{row}_{col}_mana.xml', omad100, harv100, irri100, lookup)
     dcldndc.create_setup(row, col, f'test_ldndc/{row}_{col}_setup.xml')
     dcldndc.create_ldndc(row, col, f'test_ldndc/{row}_{col}.ldndc', f'test_ldndc/{row}_{col}_mana.xml')
-    dcldndc.create_airchem(f'OUT/test/site_{row}_{col}.100', f'test_ldndc/{row}_{col}_airchemistry.txt', f'OUT/test/meteo_{row}_{col}.wth')
+    dcldndc.create_airchem(f'OUT/test/site_{row}_{col}.100', f'test_ldndc/{row}_{col}_airchem.txt', f'OUT/test/meteo_{row}_{col}.wth')
 
 N_data.close()
 C_data.close()
