@@ -385,7 +385,7 @@ def create_ldndc(row, col, ldndc_file_name, mana_file_name):
     #To file
     tree = ET.ElementTree(ldndcproject)
     ET.indent(tree)
-    tree.write(f'{ldndc_file_name}, xml_declaration=True)
+    tree.write(f'{ldndc_file_name}', xml_declaration=True)
 
     print(f'Created file {ldndc_file_name}')
 
