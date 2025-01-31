@@ -298,7 +298,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
 
 ##Functions below are only used in JRC framework
 #Function to create setup file
-def create_setup(row, col, out_file_name): #, site100):
+def create_setup(row, col, setup_file_name): #, site100):
 
     top = ET.Element('ldndcsetup')
     setup = ET.SubElement(top, 'setup')
@@ -330,12 +330,12 @@ def create_setup(row, col, out_file_name): #, site100):
     #To file
     tree = ET.ElementTree(top)
     ET.indent(tree)
-    tree.write(out_file_name, xml_declaration=True)
+    tree.write(setup_file_name, xml_declaration=True)
 
-    print(f'Created file {out_file_name}')
+    print(f'Created file {setup_file_name}')
 
 #Function to create *.ldndc file
-def create_ldndc(row, col, mana_file_name):
+def create_ldndc(row, col, ldndc_file_name, mana_file_name):
     #Get time for schedule
     mana_file = ET.parse(mana_file_name)
     start = mana_file.findall('event')[0].attrib['time'] 
@@ -385,9 +385,9 @@ def create_ldndc(row, col, mana_file_name):
     #To file
     tree = ET.ElementTree(ldndcproject)
     ET.indent(tree)
-    tree.write(f'{row}_{col}.ldndc', xml_declaration=True)
+    tree.write(f'{ldndc_file_name}, xml_declaration=True)
 
-    print(f'Created file {row}_{col}.ldndc')
+    print(f'Created file {ldndc_file_name}')
 
 
 ###Function to copy generic airchemistry file (taken from Gebesee site) to local site
