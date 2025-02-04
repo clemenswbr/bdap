@@ -31,7 +31,7 @@ def read_dot100(in_file_name):
 
 ##Conversion for DayCent soil file (soils.in) to LandscapeDNDC site file (*site.xml)
 ##DayCent soil does not contain Norg and Corg (depends on the version), they can be specified as optional arguments if needed
-##Measurment depth: Within this depth the value for Corg and Norg is constant, lower than that declines exponentially. Default is 200 [mm]
+##Measurment depth: Within this depth the value for Corg and Norg is constant, lower than that it declines exponentially. Default is 200[mm]
 ##Naming convention: corg_ts: topsoil organic carbon, norg_ts: topsoil organic nitrogen
 ##Only works if corg_ts and norg_ts are supplied and are both > 0 (and not -99.99)
 def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, measurement_depth=200, **kwargs):
