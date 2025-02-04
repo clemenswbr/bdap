@@ -35,6 +35,9 @@ def read_dot100(in_file_name):
 ##Naming convention: corg_ts: topsoil organic carbon, norg_ts: topsoil organic nitrogen
 ##Only works if corg_ts and norg_ts are supplied and are both > 0 (and not -99.99)
 def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, measurement_depth=200, **kwargs):
+    #Defaults
+    CN_min = 8 #Minimum allowed C:N ratio
+    
     #Read DayCent soil file
     dc_soil = pd.read_csv(dcsoil_file_name, sep='\t', header=None)
     dc_soil.columns = ['upper_depth', 'lower_depth', 'bd', 'wcmax', 'wcmin', 'evaporation', 'root_fraction', 'sand', 'clay', 'organic_matter', 'deltamin', 'sks', 'ph']
@@ -52,20 +55,23 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, measurement_
     try:
         corg_ts = kwargs['corg_ts']
         norg_ts = kwargs['norg_ts']
-        if any([corg_ts <= 0, norg_ts <= 0]):
-            corg = np.tile(-99.99, len(depths))
-            norg = np.tile(-99.99, len(depths))
-        elif corg_ts/norg_ts <= 8: #Threshold for lowest allowed C:N ratio; adjust norg_ts
-            norg_ts = corg_ts/10
-        else:
-            #Gradient function for organic C and N with depth
-            corg = [max(round(corg_ts * np.exp(-0.003 * max(0, d - measurement_depth)), 8), 0.00001) for d in depths]
-            norg = [max(round(norg_ts * np.exp(-0.003 * max(0, d - measurement_depth)), 8), 0.00001) for d in depths]
-        dc_soil['norg'] = norg
-        dc_soil['corg'] = corg
-    except:  
-        pass
+    except KeyError:
+        print('No corg_ts and norg_ts supplied -> -99.99')
+        corg_ts = -99.99
+        norg_ts = -99.99
+        
+    if any([corg_ts <= 0, norg_ts <= 0]):
+        corg = np.tile(-99.99, len(depths))
+        norg = np.tile(-99.99, len(depths))
+    else:
+        if corg_ts/norg_ts <= CN_min: #Threshold for lowest allowed C:N ratio; adjust norg_ts
+            norg_ts = corg_ts/CN_min
+        #Gradient function for organic C and N with depth
+        corg = [max(round(corg_ts * np.exp(-0.003 * max(0, d - measurement_depth)), 8), 0.00000000001) for d in depths]
+        norg = [max(round(norg_ts * np.exp(-0.003 * max(0, d - measurement_depth)), 8), 0.00000000001) for d in depths]
 
+    dc_soil['norg'] = norg
+    dc_soil['corg'] = corg
     #Write to *site.xml
     top = ET.Element('site')
     soil = ET.SubElement(top, 'soil')
