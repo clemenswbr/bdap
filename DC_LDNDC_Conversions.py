@@ -382,10 +382,13 @@ def create_ldndc(row, col, ldndc_file_name, mana_file_name):
 ###Function to copy generic airchemistry file (taken from Gebesee site) to local site
 ###Needs to be changed to the actual airchemistry once it is available
 def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
+    #Defaults
+    CO2 = 405
+
     #Get combined deposition from *site.100
     try:
         site_100_file = read_dot100(site_100_file_name)
-        total_deposition = site_100_file['External']['EPNFA(2)'] / 1000 #Convert from mg/m2 to g/m2
+        total_deposition = site_100_file['External']['EPNFA(2)']/1000 #Convert from mg/m2 to g/m2
     except:
         total_deposition = -99.99
 
@@ -399,7 +402,7 @@ def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
     wth_file['month'] = [str(d).zfill(2) for d in wth_file['month']]
     datetime = [f"{wth_file.iloc[i]['year']}-{wth_file.iloc[i]['month']}-{wth_file.iloc[i]['day']}" for i in range(len(wth_file))]
     #Create CO2 NH4 and NO3 deposition
-    co2 = np.tile(405, len(datetime))
+    co2 = np.tile(CO2, len(datetime))
     nh4_deposition, no3_deposition = np.tile(total_deposition/2/365, len(datetime)), np.tile(total_deposition/2/365, len(datetime))
     df_out = pd.DataFrame({'*':datetime, 'co2':co2, 'nh4dry':nh4_deposition, 'no3dry':no3_deposition})
     #Write to file
