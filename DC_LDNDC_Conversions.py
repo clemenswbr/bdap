@@ -190,7 +190,6 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                                 f_amount = float(line.split()[3].split('N')[0][1:])*10000*0.001 #Conversion from g * m^-2 to kg * ha^-1
                             except:
                                 f_amount = -99.99
-
                             ldndc_event = ET.SubElement(top, 'event')
                             ldndc_event.set('type', 'fertilize')
                             ldndc_event.set('time', str(date)[:-9])
