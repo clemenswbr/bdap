@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import re
 import os
-from copy import deepcopy
 
 
 ##Reads a *.100 (or similarly structured) file into a nested dictionary
