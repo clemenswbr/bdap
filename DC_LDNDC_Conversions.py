@@ -150,19 +150,20 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
 
     with open(sch_file_name, 'r') as events_in, open(mana_file_name, 'wb') as events_out:
         in_lines = events_in.readlines()
+        #Clean and homogenize lines
         in_lines = [re.sub(' +', ' ', il) for il in in_lines]
         in_lines = [il.lstrip(' ') for il in in_lines]
         in_lines = [il for il in in_lines if not il.startswith('#') and len(il) > 1]
         in_block_lines = []
         block_last_years = []
         block_start_years = []
+        start = 0
         for i, line in enumerate(in_lines):
             if 'Option' in line:
                 in_lines = in_lines[i:]
-                break
-        start = 0
-        for i, line in enumerate(in_lines):
-            if 'Output starting year' in line:
+            elif any([line.split()[0].isalpha(), line.split()[1].isalpha(), len(line.split()) < 3]):
+                continue
+            elif 'Output starting year' in line:
                 block_start_years.append(int(line.split()[0]))
             elif 'Last year' in line:
                 block_last_years.append(int(line.split()[0]))
@@ -174,15 +175,13 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
         for i, block in enumerate(in_block_lines):
             block_last_year = block_last_years[i]
             count_year = block_start_years[i]
-            while all((count_year <= block_last_year, count_year in range(start_year, end_year + 1))):
+            while count_year <= block_last_year:
                 for line in block:
-                    if any([line.split()[0].isalpha(), line.split()[1].isalpha(), len(line.split()) < 3]):
-                        continue
-                    else:
+                    block_year = int(line.split()[0])
+                    evt_year = count_year + block_year - 1
+                    if evt_year in range(start_year, end_year + 1):
                         event = line.split()[2]
-                        block_year = int(line.split()[0])
                         doy = int(line.split()[1])
-                        evt_year = count_year + block_year - 1
                         date = pd.to_datetime(pd.to_datetime(f'{evt_year}-01-01') + pd.Timedelta(days=doy-1))
                         #Convert events in block
                         if event == 'FERT':
@@ -198,7 +197,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             ldndc_event_info.set('type', fert_type)
                             # For inhibitors
                             if any(('I' in line.split()[3], 'SU' in line.split()[3])):
-                               ldndc_event_info.set('ni_amount', str(ni_amount))
+                                ldndc_event_info.set('ni_amount', str(ni_amount))
                         #Get crop for planting event
                         elif event == 'CROP':
                             crop = line.split()[3]
