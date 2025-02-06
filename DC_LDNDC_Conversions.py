@@ -146,6 +146,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
     till_depth = 0.2 #Tillage depth
     ldndc_initbiom = 100 #Initial biomass (not crop specific)
     ni_amount = 4.0 #NI amount for nitrification inhibitors
+    do_harvest = False #Changes to True, once a crop is planted, prevents harvesting without crops
 
     with open(sch_file_name, 'r') as events_in, open(mana_file_name, 'wb') as events_out:
         in_lines = events_in.readlines()
@@ -206,7 +207,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             try:
                                 ldndc_crop = lookup[lookup['dc_crop'] == crop]['ldndc_crop'].iloc[0]
                             except:
-                                print('CROP NOT IN LOOKUP \n') #Crops often do not appear in lookup file -> throw error and print crop, so it can be added
+                                print('CROP NOT IN LOOKUP \n') #Crops often do not appear in lookup file -> throw error and print crop
                                 print(line)
                                 ldndc_crop = '-99.99'
                                 ldndc_initbiom = '-99.99'
@@ -236,7 +237,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             ldndc_event_info.set('cn', str(cn))
                         #Harvest event
                         elif event == 'HARV':
-                            if do_harvest: #Only writes harvest event, when crop was planted before
+                            if do_harvest: 
                                 type = line.split()[3]
                                 residue = float(harv100[type]['RMVSTR'])
                                 remains = str(1 - residue)
