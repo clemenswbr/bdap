@@ -139,7 +139,7 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=9)
 
 #Function to convert DayCent *.sch/*.evt file to LDNDC *.mana file
 #kwargs are start_year and end_year; writes events in mana file only in range(start_year, end_year + 1)
-def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, lookup, **kwargs):
+def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, lookup, start_year, end_year):
     #Defaults
     fert_type = 'nh4' #Type of fertilizer in FERT event
     manure_type = 'slurry' #Type of manure to be applied
@@ -160,7 +160,6 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
             if 'Option' in line:
                 in_lines = in_lines[i:]
                 break
-        
         start = 0
         for i, line in enumerate(in_lines):
             if 'Output starting year' in line:
@@ -175,7 +174,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
         for i, block in enumerate(in_block_lines):
             block_last_year = block_last_years[i]
             count_year = block_start_years[i]
-            while all((count_year < block_last_year, count_year in range(kwargs['start_year'], kwargs['end_year'] + 1))):
+            while all((count_year <= block_last_year, count_year in range(start_year, end_year + 1))):
                 for line in block:
                     if any([line.split()[0].isalpha(), line.split()[1].isalpha(), len(line.split()) < 3]):
                         continue
@@ -289,7 +288,6 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                                 ldndc_event_info.set('depth', str(till_depth))
                         else:
                             continue
-                
                 count_year += int(line.split()[0])
         tree = ET.ElementTree(top)
         ET.indent(tree)
@@ -324,7 +322,7 @@ def create_setup(row, col, setup_file_name): #, site100):
         module.set('timemode', timemode)
 
     output = ET.SubElement(modulelist, 'module')
-    output.set('id', 'output:soilchemistry:yearly')
+    output.set('id', 'output:soilchemistry:daily')
     #To file
     tree = ET.ElementTree(top)
     ET.indent(tree)
@@ -333,13 +331,10 @@ def create_setup(row, col, setup_file_name): #, site100):
     print(f'Created file {setup_file_name}')
 
 #Function to create *.ldndc file
-def create_ldndc(row, col, ldndc_file_name, mana_file_name):
+def create_ldndc(row, col, ldndc_file_name, start_year, end_year):
     #Get time for schedule
-    mana_file = ET.parse(mana_file_name)
-    start = mana_file.findall('event')[0].attrib['time'] 
-    end = mana_file.findall('event')[-1].attrib['time']
-    timespan = int(end[:4]) - int(start[:4])
-    time = f'{start[:4]}-01-01/24 -> +{timespan}-0-0'
+    simulation_time = end_year - start_year
+    time = f'{start_year}-01-01/24 -> +{simulation_time}-0-0'
     #LDNDC project
     ldndcproject = ET.Element('ldndcproject')
     ldndcproject.set('PackageMinimumVersionRequired', '1.3')
