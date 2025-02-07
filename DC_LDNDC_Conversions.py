@@ -149,19 +149,18 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
 
     with open(sch_file_name, 'r') as events_in, open(mana_file_name, 'wb') as events_out:
         in_lines = events_in.readlines()
-        #Clean and homogenize lines
-        in_lines = [re.sub(' +', ' ', il) for il in in_lines]
-        in_lines = [il.lstrip(' ') for il in in_lines]
-        in_lines = [il for il in in_lines if not il.startswith('#') and len(il) > 1]
+        #Clean and homogenize lines; Make list of blocks
         in_block_lines = []
         block_last_years = []
         block_start_years = []
         start = 0
         for i, line in enumerate(in_lines):
-            if 'Option' in line:
-                in_lines = in_lines[i:]
-            elif any([line.split()[0].isalpha(), line.split()[1].isalpha(), len(line.split()) < 3]):
+            line = re.sub(' +', ' ').lstrip(' ')
+            if any([len(line) < 1, line.split()[0].isalpha(), line.split()[1].isalpha(),
+                    len(line.split()) < 3, line.startswith('#')]):
                 continue
+            elif 'Option' in line:
+                in_lines = in_lines[i:]
             elif 'Output starting year' in line:
                 block_start_years.append(int(line.split()[0]))
             elif 'Last year' in line:
@@ -171,6 +170,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                 start = i + 1
 
         top = ET.Element('event')
+        #Loop over blocks and write to mana_file_name
         for i, block in enumerate(in_block_lines):
             block_last_year = block_last_years[i]
             count_year = block_start_years[i]
