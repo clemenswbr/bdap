@@ -203,7 +203,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             try:
                                 ldndc_crop = lookup[lookup['dc_crop'] == crop]['ldndc_crop'].iloc[0]
                             except:
-                                print('CROP NOT IN LOOKUP \n') #Crops often do not appear in lookup file -> throw error and print crop
+                                print('CROP NOT IN LOOKUP \n') #Throw error and print crop, when ist does not exist in lookup
                                 print(line)
                                 ldndc_crop = '-99.99'
                                 ldndc_initbiom = '-99.99'
