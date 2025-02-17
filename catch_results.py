@@ -34,6 +34,7 @@ time[:] = times
 time.units = 'Week'
 n2o = ncfile.createVariable('n2o', np.float64, ('time', 'lat', 'long'))
 n2o.units = 'kg*km^-2*week^-1'
+n2o[:,:,:] = -99.99
 
 #Read lat long file
 lat_long = rasterio.open('/eos/jeodpp/data/projects/SOIL-NACA/MODEL4/DE_sim/lat_long_clip.tif')
@@ -51,7 +52,6 @@ for r in range(0, dim_rows + 1):
         try:
             df = pd.read_csv(f'test_ldndc_output/{r}_{c}_output/{r}_{c}_soilchemistry-daily.txt', sep='\t')[['datetime', 'dN_n2o_emis[kgNha-1]']]
         except FileNotFoundError:
-            n2o[:,lat_df,long_df] = -99.99
             continue
         #Read ldndc output, aggregate to weekly resolution, convert from kgNha-1 to kgNkm-2
         df['datetime'] = pd.to_datetime(df['datetime'])
@@ -63,6 +63,6 @@ for r in range(0, dim_rows + 1):
         if len(df_weekly) == len(times):
             n2o[:,lat_df,long_df] = df_weekly['dN_n2o_emis[kgNha-1]']
         else:
-            n2o[:,lat_df,long_df] = np.tile(-99.99, len(times))    
+            n2o[:,lat_df,long_df] = -99.99   
 
 ncfile.close()
