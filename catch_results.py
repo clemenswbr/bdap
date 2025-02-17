@@ -17,8 +17,8 @@ pos_long = lat_long.read(2)/100
 ncfile = Dataset('results.nc', mode='w', format='NETCDF4_CLASSIC')
 
 #Create dimensions
-ncfile.createDimension('lat', len(lat))
-ncfile.createDimension('long', len(long))
+ncfile.createDimension('lat', len(pos_lat))
+ncfile.createDimension('long', len(pos_long))
 ncfile.createDimension('time', None)
 
 #Create variables
