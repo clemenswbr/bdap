@@ -10,6 +10,7 @@ import rasterio
 os.chdir('/eos/jeodpp/data/projects/SOIL-NACA/MODEL4')
 
 #Get command line inputs
+print(sys.argv)
 nc_file_name = sys.argv[0]
 dim_rows = sys.argv[1]
 dim_cols = sys.argv[2]
@@ -42,6 +43,7 @@ long = lat_long.read(2)/100
 #Fill netCDF
 for r in range(0, dim_rows + 1):
     for c in range(0, dim_cols + 1):
+        print(r, c)
         #Check if file exists
         try:
             df = pd.read_csv(f'test_ldndc_output/{r}_{c}_output/{r}_{c}_soilchemistry-daily.txt', sep='\t')[['datetime', 'dN_n2o_emis[kgNha-1]']]
