@@ -145,7 +145,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
     till_depth = 0.2 #Tillage depth
     ldndc_initbiom = 100 #Initial biomass (not crop specific)
     ni_amount = 4.0 #NI amount for nitrification inhibitors
-    do_harvest = False #Changes to True, once a crop is planted, prevents harvesting without crops
+    do_harvest = False #Changes to True, once a crop is planted, prevents harvest when there is no crop
 
     with open(sch_file_name, 'r') as events_in, open(mana_file_name, 'wb') as events_out:
         in_lines = events_in.readlines()
@@ -203,7 +203,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             try:
                                 ldndc_crop = lookup[lookup['dc_crop'] == crop]['ldndc_crop'].iloc[0]
                             except:
-                                print('CROP NOT IN LOOKUP \n') #Throw error and print crop, when ist does not exist in lookup
+                                print('CROP NOT IN LOOKUP \n') #Throw error and print crop, when it does not exist in lookup
                                 print(line)
                                 ldndc_crop = '-99.99'
                                 ldndc_initbiom = '-99.99'
@@ -267,7 +267,6 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                                     i_amount = irri100[irri_type]['IRRAMT'] * 10
                                 else:
                                     i_amount = -99.99
-
                                 ldndc_event = ET.SubElement(top, 'event')
                                 ldndc_event.set('type', 'irrigate')
                                 ldndc_event.set('time', str(date)[:-9])
