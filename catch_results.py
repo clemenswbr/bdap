@@ -15,7 +15,7 @@ lat = lat_long.read(1)/100
 long = lat_long.read(2)/100
 
 #Create file
-ncfile = Dataset(nc_file_name, mode='w', format='NETCDF4_CLASSIC')
+ncfile = Dataset('results.nc', mode='w', format='NETCDF4_CLASSIC')
 
 #Create dimensions
 ncfile.createDimension('lat', dim_rows)
