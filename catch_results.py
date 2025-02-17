@@ -10,8 +10,8 @@ os.chdir('/eos/jeodpp/data/projects/SOIL-NACA/MODEL4')
 
 #Read lat long file
 lat_long = rasterio.open('/eos/jeodpp/data/projects/SOIL-NACA/MODEL4/DE_sim/lat_long_clip.tif')
-lat = lat_long.read(1)/100
-long = lat_long.read(2)/100
+pos_lat = lat_long.read(1)/100
+pos_long = lat_long.read(2)/100
 
 #Create file
 ncfile = Dataset('results.nc', mode='w', format='NETCDF4_CLASSIC')
@@ -41,8 +41,8 @@ for r in range(lat_long.height):
     for c in range(lat_long.width):
         print(r, c)
         #Get lat and long
-        lat_df = lat[r,c]/100
-        long_df = long[r,c]/100
+        lat_df = pos_lat[r,c]/100
+        long_df = pos_long[r,c]/100
         if any(lat_df == lat_long.nodata/100, long_df == lat_long.nodata/100):
             continue
         #Check if file exists
