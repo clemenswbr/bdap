@@ -41,8 +41,8 @@ for r in range(lat_long.height):
     for c in range(lat_long.width):
         print(r, c)
         #Get lat and long
-        lat_df = lat[r,c]
-        long_df = long[r,c]
+        lat_df = lat[r,c]/100
+        long_df = long[r,c]/100
         if any(lat_df == lat_long.nodata/100, long_df == lat_long.nodata/100):
             continue
         #Check if file exists
