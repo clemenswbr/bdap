@@ -32,7 +32,7 @@ time = ncfile.createVariable('time', np.float32, ('time'))
 times = pd.date_range(pd.to_datetime('2011-01-04'), pd.to_datetime('2024-12-31'), freq='w')
 time[:] = times
 time.units = 'Week'
-n2o = ncfile.createVariable('n2o', np.float64('time', 'lat', 'long'))
+n2o = ncfile.createVariable('n2o', np.float64, ('time', 'lat', 'long'))
 n2o.units = 'kg*km^-2*week^-1'
 
 #Read lat long file
