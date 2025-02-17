@@ -34,7 +34,7 @@ n2o = ncfile.createVariable('n2o', np.float64, ('time', 'lat', 'long'))
 n2o.units = 'kg*km^-2*week^-1'
 
 #Create empty array to fill with values
-arr = np.full((len(times, lat_long.height, lat_long.width)), -99.99)
+arr = np.full((len(times), lat_long.height, lat_long.width), -99.99)
 
 #Fill array
 for r in range(lat_long.height):
