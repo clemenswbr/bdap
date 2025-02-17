@@ -43,7 +43,7 @@ for r in range(lat_long.height):
         #Get lat and long
         lat_df = lat[r,c]
         long_df = long[r,c]
-        if any(lat_df == lat_long.nodata, long_df == lat_long.nodata):
+        if any(lat_df == lat_long.nodata/100, long_df == lat_long.nodata/100):
             continue
         #Check if file exists
         try:
