@@ -9,11 +9,10 @@ import rasterio
 
 os.chdir('/eos/jeodpp/data/projects/SOIL-NACA/MODEL4')
 
-#Get command line inputs
-print(sys.argv)
-nc_file_name = sys.argv[1]
-dim_rows = int(sys.argv[2])
-dim_cols = int(sys.argv[3])
+#Read lat long file
+lat_long = rasterio.open('/eos/jeodpp/data/projects/SOIL-NACA/MODEL4/DE_sim/lat_long_clip.tif')
+lat = lat_long.read(1)/100
+long = lat_long.read(2)/100
 
 #Create file
 ncfile = Dataset(nc_file_name, mode='w', format='NETCDF4_CLASSIC')
@@ -36,14 +35,9 @@ n2o = ncfile.createVariable('n2o', np.float64, ('time', 'lat', 'long'))
 n2o.units = 'kg*km^-2*week^-1'
 n2o[:,:,:] = -99.99
 
-#Read lat long file
-lat_long = rasterio.open('/eos/jeodpp/data/projects/SOIL-NACA/MODEL4/DE_sim/lat_long_clip.tif')
-lat = lat_long.read(1)/100
-long = lat_long.read(2)/100
-
 #Fill netCDF
-for r in range(0, dim_rows + 1):
-    for c in range(0, dim_cols + 1):
+for r in range(len(lat)):
+    for c in range(len(long)):
         print(r, c)
         #Get lat and long
         lat_df = lat[r,c]
