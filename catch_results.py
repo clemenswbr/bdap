@@ -50,7 +50,7 @@ for r in range(0, dim_rows + 1):
         #Check if file exists
         try:
             df = pd.read_csv(f'test_ldndc_output/{r}_{c}_output/{r}_{c}_soilchemistry-daily.txt', sep='\t')[['datetime', 'dN_n2o_emis[kgNha-1]']]
-        except:
+        except FileNotFoundError:
             n2o[:,lat_df,long_df] = -99.99
             continue
         #Read ldndc output, aggregate to weekly resolution, convert from kgNha-1 to kgNkm-2
