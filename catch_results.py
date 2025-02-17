@@ -44,14 +44,15 @@ long = lat_long.read(2)/100
 for r in range(0, dim_rows + 1):
     for c in range(0, dim_cols + 1):
         print(r, c)
+        #Get lat and long
+        lat_df = lat[r,c]
+        long_df = long[r,c]
         #Check if file exists
         try:
             df = pd.read_csv(f'test_ldndc_output/{r}_{c}_output/{r}_{c}_soilchemistry-daily.txt', sep='\t')[['datetime', 'dN_n2o_emis[kgNha-1]']]
         except:
+            n2o[:,lat_df,long_df] = np.tile(-99.99, len(times))
             continue
-        #Get lat and long
-        lat_df = lat[r,c]
-        long_df = long[r,c]
         #Read ldndc output, aggregate to weekly resolution, convert from kgNha-1 to kgNkm-2
         df['datetime'] = pd.to_datetime(df['datetime'])
         #df = df.replace(-99.99, 0)
