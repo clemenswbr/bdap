@@ -11,9 +11,9 @@ os.chdir('/eos/jeodpp/data/projects/SOIL-NACA/MODEL4')
 
 #Get command line inputs
 print(sys.argv)
-nc_file_name = sys.argv[0]
-dim_rows = sys.argv[1]
-dim_cols = sys.argv[2]
+nc_file_name = sys.argv[1]
+dim_rows = int(sys.argv[2])
+dim_cols = int(sys.argv[3])
 
 #Create file
 ncfile = Dataset(nc_file_name, mode='w', format='NETCDF4_CLASSIC')
