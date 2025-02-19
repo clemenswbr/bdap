@@ -7,13 +7,14 @@ import rasterio
 
 
 os.chdir('/eos/jeodpp/data/projects/SOIL-NACA/MODEL4')
+os.system('cp netcdf_template_copy.nc template.nc')
 
 #Dimensions (time, x, y)
 n_time = 730
 n_row = 866
 n_col = 639
 
-ncfile = Dataset('netcdf_template.nc', mode='a', format='netCDF4_classic', clobber=True)
+ncfile = Dataset('template.nc', mode='a', format='netCDF4_classic', clobber=True)
 #times = pd.date_range(pd.to_datetime('2011-01-04'), pd.to_datetime('2024-12-31'), freq='w')
 
 #Fill array
