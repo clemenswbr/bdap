@@ -14,7 +14,7 @@ n_row = 866
 n_col = 639
 
 ncfile = Dataset('netcdf_template.nc', mode='a', format='netCDF4_classic', clobber=True)
-times = pd.date_range(pd.to_datetime('2011-01-04'), pd.to_datetime('2024-12-31'), freq='w')
+#times = pd.date_range(pd.to_datetime('2011-01-04'), pd.to_datetime('2024-12-31'), freq='w')
 
 #Fill array
 for r in range(n_row):
@@ -30,7 +30,7 @@ for r in range(n_row):
         df_weekly = df.resample('W').sum()
         df_weekly['dN_n2o_emis[kgNha-1]'] = df_weekly['dN_n2o_emis[kgNha-1]'] * 0.01
         #Write to file if output is complete
-        if len(df_weekly) == len(times):
+        if len(df_weekly) == n_time:
             ncfile['n2o'][:,r,c] = df_weekly['dN_n2o_emis[kgNha-1]']
 
 ncfile.close()
