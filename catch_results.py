@@ -7,6 +7,7 @@ import rasterio
 
 
 os.chdir('/eos/jeodpp/data/projects/SOIL-NACA/MODEL4')
+os.system('rm template.nc')
 os.system('cp netcdf_template_copy.nc template.nc')
 
 #Dimensions (time, x, y)
@@ -34,5 +35,6 @@ for r in range(n_row):
         if len(df_weekly) == n_time:
             print('Writing to ncfile', df_weekly['dN_n2o_emis[kgNha-1]'][0])
             ncfile['n2o'][:,r,c] = df_weekly['dN_n2o_emis[kgNha-1]']
+        ncfile['n2o'][:,r,c] = r
 
 ncfile.close()
