@@ -32,6 +32,7 @@ for r in range(n_row):
         df_weekly['dN_n2o_emis[kgNha-1]'] = df_weekly['dN_n2o_emis[kgNha-1]'] * 0.01
         #Write to file if output is complete
         if len(df_weekly) == n_time:
+            print('Writing to ncfile', df_weekly['dN_n2o_emis[kgNha-1]'][0])
             ncfile['n2o'][:,r,c] = df_weekly['dN_n2o_emis[kgNha-1]']
 
 ncfile.close()
