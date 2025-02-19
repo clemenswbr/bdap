@@ -18,7 +18,7 @@ ncfile = Dataset('netcdf_template.nc', mode='a', format='netCDF4_classic', clobb
 
 #Fill array
 for r in range(n_row):
-    for c in range(n_col):
+    for c in [309,310]:
         print(r, c)
         try:
             df = pd.read_csv(f'test_ldndc_output/{r}_{c}_output/{r}_{c}_soilchemistry-daily.txt', sep='\t')[['datetime', 'dN_n2o_emis[kgNha-1]']]
