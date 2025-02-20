@@ -16,12 +16,13 @@ n_row = 866
 n_col = 639
 
 ncfile = Dataset('template.nc', mode='a', format='netCDF4_classic', clobber=True)
+print('Dimensions of n2o variable in ncfile', ncfile['n2o'])
 #times = pd.date_range(pd.to_datetime('2011-01-04'), pd.to_datetime('2024-12-31'), freq='w')
 
 #Fill array
 for r in range(n_row):
     for c in [309,310]:
-        print(r, c)
+        print('Row ', r, ' Col ', c)
         try:
             df = pd.read_csv(f'test_ldndc_output/{r}_{c}_output/{r}_{c}_soilchemistry-daily.txt', sep='\t')[['datetime', 'dN_n2o_emis[kgNha-1]']]
         except FileNotFoundError:
@@ -31,9 +32,10 @@ for r in range(n_row):
         df.set_index('datetime', inplace=True)
         df_weekly = df.resample('W').sum()
         df_weekly['dN_n2o_emis[kgNha-1]'] = df_weekly['dN_n2o_emis[kgNha-1]'] * 0.01
+        print(f'Dimensions of output: {df_weekly.shape}')
         #Write to file if output is complete
         if len(df_weekly) == n_time:
-            print('Writing to ncfile', df_weekly['dN_n2o_emis[kgNha-1]'][0])
+            print('Writing to ncfile ', df_weekly['dN_n2o_emis[kgNha-1]'][0])
             ncfile['n2o'][:,r,c] = df_weekly['dN_n2o_emis[kgNha-1]']
         ncfile['n2o'][:,r,c] = r
 
