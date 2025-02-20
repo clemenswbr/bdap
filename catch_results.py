@@ -11,7 +11,7 @@ os.system('rm template.nc')
 os.system('cp netcdf_template.nc output.nc')
 
 #Dimensions (time, x, y)
-n_time = 678
+n_time = 679
 n_row = 866
 n_col = 639
 
@@ -37,6 +37,5 @@ for r in range(n_row):
         if len(df_weekly) == n_time:
             print('Writing to ncfile ', df_weekly['dN_n2o_emis[kgNha-1]'][0])
             ncfile['n2o'][:,r,c] = df_weekly['dN_n2o_emis[kgNha-1]']
-        ncfile['n2o'][:,r,c] = r
 
 ncfile.close()
