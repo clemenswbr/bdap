@@ -8,7 +8,7 @@ import rasterio
 
 os.chdir('/eos/jeodpp/data/projects/SOIL-NACA/MODEL4')
 os.system('rm template.nc')
-os.system('cp netcdf_template_copy.nc template.nc')
+os.system('cp netcdf_template.nc template.nc')
 
 #Dimensions (time, x, y)
 n_time = 730
