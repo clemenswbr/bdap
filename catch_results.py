@@ -8,14 +8,14 @@ import rasterio
 
 os.chdir('/eos/jeodpp/data/projects/SOIL-NACA/MODEL4')
 os.system('rm template.nc')
-os.system('cp netcdf_template.nc template.nc')
+os.system('cp netcdf_template.nc output.nc')
 
 #Dimensions (time, x, y)
-n_time = 730
+n_time = 678
 n_row = 866
 n_col = 639
 
-ncfile = Dataset('template.nc', mode='a', format='netCDF4_classic', clobber=True)
+ncfile = Dataset('output.nc', mode='a', format='netCDF4_classic', clobber=True)
 print('Dimensions of n2o variable in ncfile', ncfile['n2o'])
 #times = pd.date_range(pd.to_datetime('2011-01-04'), pd.to_datetime('2024-12-31'), freq='w')
 
