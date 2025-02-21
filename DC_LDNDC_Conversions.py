@@ -89,13 +89,17 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, measurement_
 
 
 ##Conversion of DayCent *.wth to LDNDC *climate.txt
-## *.wth files from JRC framework have 9 columns, "normal" *.wth files have 7, Number of columns can be specified in the function call
+##Number of defined columns have to be specified in the function call (minimum is 7)
 ## *args takes the site100 file, which may contain information about the lat, long, elevation
-def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=9):
+def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=7):
     #Read DayCent *.wth file
     wth_file = pd.read_csv(wth_file_name, sep='\t', header=None)
-    wth_file = wth_file.iloc[:,:columns] 
-    wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'tavg', 'rad'][:columns]
+    wth_file = wth_file.iloc[:,:columns]
+    wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'rad', 'rel_humidity', 'wind'][:columns]
+    wth_file = wth_file.drop(['rel_humidity'], axis='columns', errors='ignore')
+    wth_file['rad'] = wth_file['rad'] * 0.485 #Convert from Langley/d to W*m^-2
+    wth_file['wind'] = round(wth_file['wind'] * 1.609344, 4) #Convert from miles/hour to km/hour
+    #wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'tavg', 'rad'][:columns]
     #wth_file = wth_file.dropna(axis='rows', subset=['day'])
     wth_file = wth_file.astype({'day':int, 'month':int, 'year':int})
     wth_file['prec'] = wth_file['prec']/10 #Convert from cm to mm
@@ -406,3 +410,51 @@ def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
         df_out.to_csv(f, index=False, header=True, sep='\t')
     
     print(f'Created file {airchemistry_file_name}')
+
+
+##Conversion of DayCent *.wth to LDNDC *climate.txt
+##Number of defined columns have to be specified in the function call (for JRC its 9)
+##*args takes the site100 file, which may contain information about the lat, long, elevation
+def convert_wth_climate_jrc(wth_file_name, microclimate_file_name, *args, columns=9):
+    #Read DayCent *.wth file
+    wth_file = pd.read_csv(wth_file_name, sep='\t', header=None)
+    wth_file = wth_file.iloc[:,:columns]
+    wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'tavg', 'rad'][:columns]
+    #wth_file = wth_file.dropna(axis='rows', subset=['day'])
+    wth_file = wth_file.astype({'day':int, 'month':int, 'year':int})
+    wth_file['prec'] = wth_file['prec']/10 #Convert from cm to mm
+    wth_file['day'] = [str(d).zfill(2) for d in wth_file['day']]
+    wth_file['month'] = [str(d).zfill(2) for d in wth_file['month']]
+    start_time =  f"{wth_file['year'][0]}-{wth_file['month'][0]}-{wth_file['day'][0]}"
+    wth_file = wth_file.drop(['day', 'month', 'year', 'doy'], axis='columns')
+    wth_file = wth_file.round(2)
+
+    #Get lat and long from site.100 file
+    if len(args) > 0:
+        site100 = read_dot100(args[0])
+        site100['Site'].setdefault('SITLAT', -99.99)
+        site100['Site'].setdefault('SITLNG', -99.99)
+        site100['Site'].setdefault('ELEV', -99.99)
+        lat = site100['Site']['SITLAT']
+        long = site100['Site']['SITLNG']
+        elev = site100['Site']['ELEV']
+    
+    wth_file = wth_file.reset_index(drop=True)
+
+    with open(microclimate_file_name, 'w') as f:
+        f.write('%global\n')
+        f.write(f'        time = "{start_time}/1"\n')
+        f.write('\n')
+        f.write('%climate\n')
+        f.write('        id = 0\n')
+        f.write('\n')
+        if len(args) > 0:
+            f.write('%attributes\n')
+            f.write(f'        elevation = "{elev}"\n')
+            f.write(f'        latitude = "{lat}"\n')
+            f.write(f'        longitude = "{long}"\n')
+            f.write('\n')         
+        f.write('%data\n')
+        wth_file.to_csv(f, index=False, header=True, sep='\t')
+
+    print(f'Created file {microclimate_file_name}')
