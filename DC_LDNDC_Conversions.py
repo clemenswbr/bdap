@@ -189,7 +189,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                         #Convert events in block
                         if event == 'FERT':
                             try:
-                                f_amount = float(line.split()[3].split('N')[0][1:])*10000*0.001 #Conversion from g * m^-2 to kg * ha^-1
+                                f_amount = float(line.split()[3].split('N')[0][1:]) * 10000 * 0.001 #Conversion from g * m^-2 to kg * ha^-1
                             except:
                                 f_amount = -99.99
                             ldndc_event = ET.SubElement(top, 'event')
@@ -201,6 +201,8 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             # For inhibitors
                             if any(('I' in line.split()[3], 'SU' in line.split()[3])):
                                 ldndc_event_info.set('ni_amount', str(ni_amount))
+                            elif re.findall(r'U\d', line.split()[3]):
+                                ldndc_event_info.set('type', 'urea')
                         #Get crop for planting event
                         elif event == 'CROP':
                             crop = line.split()[3]
