@@ -147,9 +147,9 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
     fert_type = 'nh4' #Type of fertilizer in FERT event
     manure_type = 'slurry' #Type of manure to be applied
     till_depth = 0.2 #Tillage depth
-    ldndc_initbiom = 100 #Initial biomass (not crop specific)
     ni_amount = 4.0 #NI amount for nitrification inhibitors
     do_harvest = False #Changes to True, once a crop is planted, prevents harvest when there is no crop
+    do_till = True #Changes to False once a crop is planted, prevents tilling while a crop is on the field
 
     with open(sch_file_name, 'r') as events_in, open(mana_file_name, 'wb') as events_out:
         in_lines = events_in.readlines()
@@ -208,6 +208,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             crop = line.split()[3]
                             try:
                                 ldndc_crop = lookup[lookup['dc_crop'] == crop]['ldndc_crop'].iloc[0]
+                                ldndc_initbiom = lookup[lookup['dc_crop'] == crop]['initbiom'].iloc[0]
                             except:
                                 print('CROP NOT IN LOOKUP \n') #Throw error and print crop, when it does not exist in lookup
                                 print(line)
@@ -221,9 +222,10 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             ldndc_event_info = ET.SubElement(ldndc_event, 'plant')
                             ldndc_event_info.set('type', ldndc_crop)
                             ldndc_event_info.set('name', ldndc_crop)
-                            ldndc_event_subinfo = ET.SubElement(ldndc_event_info, 'crop')
+                            ldndc_event_subinfo = ET.SubElement(ldndc_event_info, ['grass' if crop == 'grass' else 'crop'][0])
                             ldndc_event_subinfo.set('initialbiomass', str(ldndc_initbiom))
                             do_harvest = True
+                            do_till = False
                         #Organic matter input (manure)
                         elif event == 'OMAD':
                             ldndc_event = ET.SubElement(top, 'event')
@@ -280,9 +282,26 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                                 ldndc_event_info.set('amount', str(i_amount))
                         #Cultivation event; is always till
                         elif event == 'CULT':
-                            if line.split()[3] == 'HERB':
+                            cult_type = line.split()[3]
+                            if cult_type == 'HERB':
                                 continue
-                            else:
+                            elif cult_type == 'SHRD':
+                                #90% of crop remains on field, but is tilled into the soil
+                                #Harvest with 90% remains
+                                ldndc_event = ET.SubElement(top, 'event')
+                                ldndc_event.set('type', 'harvest')
+                                ldndc_event.set('time', str(date)[:-9])
+                                ldndc_event_info = ET.SubElement(ldndc_event, 'harvest')
+                                ldndc_event_info.set('type', ldndc_crop)
+                                ldndc_event_info.set('name', ldndc_crop)
+                                ldndc_event_info.set('remains', 0.9)
+                                #Tilling
+                                ldndc_event = ET.SubElement(top, 'event')
+                                ldndc_event.set('type', 'till')
+                                ldndc_event.set('time', str(date)[:-9])
+                                ldndc_event_info = ET.SubElement(ldndc_event, 'till')
+                                ldndc_event_info.set('depth', str(till_depth))
+                            elif do_till:
                                 ldndc_event = ET.SubElement(top, 'event')
                                 ldndc_event.set('type', 'till')
                                 ldndc_event.set('time', str(date)[:-9])
