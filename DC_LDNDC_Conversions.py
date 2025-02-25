@@ -160,7 +160,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
         start = 0
         for i, line in enumerate(in_lines):
             line = re.sub(' +', ' ', line).lstrip(' ')
-            if any([len(line) < 1, line.split()[0].isalpha(), line.split()[1].isalpha(),
+            if any([len(line) < 1, line.split()[0].isalpha(),
                     len(line.split()) < 3, line.startswith('#')]):
                 continue
             elif 'Option' in line:
