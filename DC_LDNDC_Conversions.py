@@ -153,6 +153,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
 
     with open(sch_file_name, 'r') as events_in, open(mana_file_name, 'wb') as events_out:
         in_lines = events_in.readlines()
+        in_lines = [re.sub(' +', ' ', line).lstrip(' ') for line in in_lines if len(line.split()) > 1]
         #Clean and homogenize lines; Make list of blocks
         in_block_lines = []
         block_last_years = []
@@ -161,8 +162,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
         for i, line in enumerate(in_lines):
             line = re.sub(' +', ' ', line).lstrip(' ')
             print(line.split())
-            if any([len(line) < 1, line.split()[0].isalpha(),
-                    len(line.split()) < 3, line.startswith('#')]):
+            if any([line.split()[0].isalpha(), len(line.split()) <= 3, line.startswith('#')]):
                 continue
             elif 'Option' in line:
                 in_lines = in_lines[i:]
