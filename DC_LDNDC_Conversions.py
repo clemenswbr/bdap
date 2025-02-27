@@ -141,8 +141,14 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=7)
 
 
 #Function to convert DayCent *.sch/*.evt file to LDNDC *.mana file
+#Grass is always PERG
+#Fertilization is always nh4 unless urea is recognized in DAYCENT input
+#Grazing is generic
+#Manure type is slurry per default
+#Tillage depth is always 0.2m
+#Non N fertilization and cultivation that is not tillage are ignored
 #kwargs are start_year and end_year; writes events in mana file only in range(start_year, end_year + 1)
-def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, lookup, start_year, end_year):
+def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, lookup, **kwargs):
     #Defaults
     fert_type = 'nh4' #Type of fertilizer in FERT event
     manure_type = 'slurry' #Type of manure to be applied
@@ -150,18 +156,25 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
     ni_amount = 4.0 #NI amount for nitrification inhibitors
     do_harvest = False #Changes to True, once a crop is planted, prevents harvest when there is no crop
     do_till = True #Changes to False once a crop is planted, prevents tilling while a crop is on the field
-
+    
+    start_year = kwargs['start_year']
+    end_year = kwargs['end_year']
+    
     with open(sch_file_name, 'r') as events_in, open(mana_file_name, 'wb') as events_out:
+        #Start xml
+        top = ET.Element('event')
+        
+        #Clean and homogenize lines; Make list of blocks
         in_lines = events_in.readlines()
         in_lines = [re.sub(' +', ' ', line).lstrip(' ') for line in in_lines if len(line.split()) > 1]
-        #Clean and homogenize lines; Make list of blocks
         in_block_lines = []
         block_last_years = []
         block_start_years = []
         start = 0
+        block = 1
         for i, line in enumerate(in_lines):
-            line = re.sub(' +', ' ', line).lstrip(' ')
-            if any([line.split()[0].isalpha(), len(line.split()) <= 3, line.startswith('#')]):
+            if any([len(line.split()) < 3, line.startswith('#'), not line.split()[0].lstrip('-').isdigit()]):
+                start = i + 1
                 continue
             elif 'Option' in line:
                 in_lines = in_lines[i:]
@@ -169,11 +182,23 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                 block_start_years.append(int(line.split()[0]))
             elif 'Last year' in line:
                 block_last_years.append(int(line.split()[0]))
+            elif all((re.findall(r'1 1 CROP G\d', line), block == 1)):
+                #Grassland simulation, plant PERG at the beginning of the simulation with initbiom=200
+                ldndc_event = ET.SubElement(top, 'event')
+                ldndc_event.set('type', 'plant')
+                ldndc_event.set('time', f'{start_year}-01-01')
+                ldndc_event_info = ET.SubElement(ldndc_event, 'plant')
+                ldndc_event_info.set('type', 'PERG')
+                ldndc_event_info.set('name', 'PERG')
+                ldndc_event_subinfo = ET.SubElement(ldndc_event_info, 'grass')
+                ldndc_event_subinfo.set('initialbiomass', str(200))
+                do_harvest = True
+                ldndc_crop = 'PERG'
             elif '-999 -999 X' in line:
                 in_block_lines.append(in_lines[start:i])
                 start = i + 1
+                block += 1
 
-        top = ET.Element('event')
         #Loop over blocks and write to mana_file_name
         for i, block in enumerate(in_block_lines):
             block_last_year = block_last_years[i]
@@ -190,8 +215,10 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                         if event == 'FERT':
                             try:
                                 f_amount = float(line.split()[3].split('N')[0][1:]) * 10000 * 0.001 #Conversion from g * m^-2 to kg * ha^-1
+                                f_type = 'urea' if re.findall(r'U\d', line.split()[3]) else fert_type
                             except:
-                                f_amount = -99.99
+                                print('Could not access fertilization info for:', line)
+                                continue
                             ldndc_event = ET.SubElement(top, 'event')
                             ldndc_event.set('type', 'fertilize')
                             ldndc_event.set('time', str(date)[:-9])
@@ -201,8 +228,6 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             # For inhibitors
                             if any(('I' in line.split()[3], 'SU' in line.split()[3])):
                                 ldndc_event_info.set('ni_amount', str(ni_amount))
-                            elif re.findall(r'U\d', line.split()[3]):
-                                ldndc_event_info.set('type', 'urea')
                         #Get crop for planting event
                         elif event == 'CROP':
                             crop = line.split()[3]
@@ -210,8 +235,9 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                                 ldndc_crop = lookup[lookup['dc_crop'] == crop]['ldndc_crop'].iloc[0]
                                 ldndc_initbiom = lookup[lookup['dc_crop'] == crop]['initbiom'].iloc[0]
                             except:
-                                print('CROP NOT IN LOOKUP \n') #Throw error and print crop, when it does not exist in lookup
-                                print(line)
+                                #Throw error and print crop, when it does not exist in lookup; avoid hard error
+                                #Set crop and biomass to -99.99 so something is written to *mana.xml and it is clear the crop is not left empty on purpose
+                                print('Crop not in lookup:', line)
                                 ldndc_crop = '-99.99'
                                 ldndc_initbiom = '-99.99'
                         #Plant event
@@ -222,7 +248,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             ldndc_event_info = ET.SubElement(ldndc_event, 'plant')
                             ldndc_event_info.set('type', ldndc_crop)
                             ldndc_event_info.set('name', ldndc_crop)
-                            ldndc_event_subinfo = ET.SubElement(ldndc_event_info, ['grass' if crop == 'grass' else 'crop'][0])
+                            ldndc_event_subinfo = ET.SubElement(ldndc_event_info, 'grass' if ldndc_crop == 'PERG' else 'crop')
                             ldndc_event_subinfo.set('initialbiomass', str(ldndc_initbiom))
                             do_harvest = True
                             do_till = False
@@ -235,14 +261,26 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             ldndc_event_info.set('type', manure_type)
                             type = line.split()[3]
                             c = omad100[type]['ASTGC']
-                            c = c/1000 * 10000 #Convert g C m^2 -> kg C ha^2
+                            c = c/1000 * 10000 #Convert g C m^-2 -> kg C ha^-2
                             cn = omad100[type]['ASTREC(1)']
                             ldndc_event_info.set('c', str(c))
                             ldndc_event_info.set('cn', str(cn))
                         #Harvest event
-                        elif event == 'HARV':
-                            if do_harvest: 
-                                type = line.split()[3]
+                        elif all((event == 'HARV', do_harvest == True)):
+                            type = line.split()[3]
+                            #Cut event; HARV H in DayCent
+                            if ldndc_crop == 'PERG':
+                                harvest = float(harv100[type]['RMVSTR'])
+                                remains = str(round(1 - harvest, 3))
+                                ldndc_event = ET.SubElement(top, 'event')
+                                ldndc_event.set('type', 'cut')
+                                ldndc_event.set('time', str(date)[:-9])
+                                ldndc_event_info = ET.SubElement(ldndc_event, 'cut')
+                                ldndc_event_info.set('type', ldndc_crop)
+                                ldndc_event_info.set('name', ldndc_crop)
+                                ldndc_event_info.set('remains_relative', remains)
+                            #Harvest event for crops
+                            else:
                                 residue = float(harv100[type]['RMVSTR'])
                                 remains = str(1 - residue)
                                 ldndc_event = ET.SubElement(top, 'event')
@@ -252,9 +290,10 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                                 ldndc_event_info.set('type', ldndc_crop)
                                 ldndc_event_info.set('name', ldndc_crop)
                                 ldndc_event_info.set('remains', remains)
-                            do_harvest = False
+                                do_harvest = False
                         #Irrigation event
                         elif event == 'IRIG':
+                            #Ignore irrigation to field capacity
                             if line.split()[3][-2] == 'L':
                                 continue
                             else:
@@ -307,6 +346,18 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                                 ldndc_event.set('time', str(date)[:-9])
                                 ldndc_event_info = ET.SubElement(ldndc_event, 'till')
                                 ldndc_event_info.set('depth', str(till_depth))
+                            elif event == 'GRAZ':
+                                #Assumes 30 days of cattle grazing with 28 animals per hectare
+                                ldndc_event = ET.SubElement(top, 'event')
+                                ldndc_event.set('type', 'graze')
+                                ldndc_event.set('time', f'{str(date)[:-9]} -> +30')
+                                ldndc_event_info = ET.SubElement(ldndc_event, 'graze')
+                                ldndc_event_info.set('headcount', str(28))
+                                ldndc_event_info.set('grazinghours', str(9.5))
+                                ldndc_event_info.set('demandcarbon', str(4.6))
+                                ldndc_event_info.set('dungcarbon', str(1.44))
+                                ldndc_event_info.set('dungnitrogen', str(0.064))
+                                ldndc_event_info.set('urinenitrogen', str(0.096))
                         else:
                             continue
                 count_year += int(line.split()[0])
@@ -315,8 +366,6 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
         tree.write(mana_file_name, xml_declaration=True)
     events_in.close()
     events_out.close()
-
-    print(f'Created file {mana_file_name}')
 
 
 ##Functions below are only used in JRC framework
