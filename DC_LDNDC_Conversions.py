@@ -492,6 +492,7 @@ def convert_wth_climate_jrc(wth_file_name, microclimate_file_name, start_year, *
     wth_file = pd.read_csv(wth_file_name, sep='\t', header=None)
     wth_file = wth_file.iloc[:,:columns]
     wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'tavg', 'rad'][:columns]
+    wth_file['datetime'] = pd.to_datetime([f'{day}-{month}-{year}' for day, month, year in zip(wth_file['day'], wth_file['month'], wth_file['year'])])
     #wth_file = wth_file.dropna(axis='rows', subset=['day'])
     wth_file = wth_file.astype({'day':int, 'month':int, 'year':int})
     wth_file['prec'] = wth_file['prec']/10 #Convert from cm to mm
