@@ -34,7 +34,7 @@ for run in glob.glob('OUT/test/site_*_*.100'):
 
     print('Corg: ', corg_ts, 'Norg: ', norg_ts)
     print('Soil: ', f'OUT/test/soils_{row}_{col}.in', f'test_ldndc/{row}_{col}_site.xml', 'corg_ts=corg_ts, norg_ts=norg_ts')
-    print('Meteo: ', f'OUT/test/meteo_{row}_{col}.wth', f'test_ldndc/{row}_{col}_climate.txt', f'OUT/test/site_{row}_{col}.100')
+    print('Meteo: ', f'OUT/test/meteo_{row}_{col}.wth', f'test_ldndc/{row}_{col}_climate.txt', '2015', f'OUT/test/site_{row}_{col}.100')
     print('Mana: ', f'OUT/test/mgt_{row}_{col}.evt', f'test_ldndc/{row}_{col}_mana.xml', 'omad100', 'harv100', 'irri100', 'lookup', 'start_year=2015', 'end_year=2024')
     print('Setup: ', row, col, f'OUT/test/{row}_{col}_setup.xml')
     print('LDNDC: ', row, col, f'test_ldndc/{row}_{col}_mana.xml')
@@ -42,7 +42,7 @@ for run in glob.glob('OUT/test/site_*_*.100'):
     print('_______________________________')
 
     dcldndc.convert_dcsoil_ldndcsoil(f'OUT/test/soils_{row}_{col}.in', f'test_ldndc/{row}_{col}_site.xml', norg_ts=norg_ts, corg_ts=corg_ts)
-    dcldndc.convert_wth_climate_jrc(f'OUT/test/meteo_{row}_{col}.wth', f'test_ldndc/{row}_{col}_climate.txt', f'OUT/test/site_{row}_{col}.100')
+    dcldndc.convert_wth_climate_jrc(f'OUT/test/meteo_{row}_{col}.wth', f'test_ldndc/{row}_{col}_climate.txt', 2015, f'OUT/test/site_{row}_{col}.100')
     dcldndc.convert_evt_mana(f'OUT/test/mgt_{row}_{col}.evt', f'test_ldndc/{row}_{col}_mana.xml', omad100, harv100, irri100, lookup, start_year=2015, end_year=2024)
     dcldndc.create_setup(row, col, f'test_ldndc/{row}_{col}_setup.xml')
     dcldndc.create_ldndc(row, col, f'test_ldndc/{row}_{col}.ldndc', 2015, 2024)
