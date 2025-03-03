@@ -91,7 +91,8 @@ def convert_dcsoil_ldndcsoil(dcsoil_file_name, ldndcsoil_file_name, measurement_
 ##Conversion of DayCent *.wth to LDNDC *climate.txt
 ##Number of defined columns have to be specified in the function call (minimum is 7)
 ## *args takes the site100 file, which may contain information about the lat, long, elevation
-def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=7):
+##tavg can be estimated as (tmax - tmin)/2 if estimate tavg = True
+def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=7, estimate_tavg=False):
     #Read DayCent *.wth file
     wth_file = pd.read_csv(wth_file_name, sep='\t', header=None)
     wth_file = wth_file.iloc[:,:columns]
@@ -99,8 +100,6 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=7)
     wth_file = wth_file.drop(['rel_humidity'], axis='columns', errors='ignore')
     wth_file['rad'] = wth_file['rad'] * 0.485 #Convert from Langley/d to W*m^-2
     wth_file['wind'] = round(wth_file['wind'] * 1.609344, 4) #Convert from miles/hour to km/hour
-    #wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'tavg', 'rad'][:columns]
-    #wth_file = wth_file.dropna(axis='rows', subset=['day'])
     wth_file = wth_file.astype({'day':int, 'month':int, 'year':int})
     wth_file['prec'] = wth_file['prec']/10 #Convert from cm to mm
     wth_file['day'] = [str(d).zfill(2) for d in wth_file['day']]
@@ -108,6 +107,9 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=7)
     start_time =  f"{wth_file['year'][0]}-{wth_file['month'][0]}-{wth_file['day'][0]}"
     wth_file = wth_file.drop(['day', 'month', 'year', 'doy'], axis='columns')
     wth_file = wth_file.round(2)
+    #Insert estimation of tavg
+    tavg = round((wth_file['tmax'] - wth_file['tmin'])/2, 2)
+    wth_file.insert(2, column='tavg', value=tavg)
 
     #Get lat and long from site.100 file
     if len(args) > 0:
@@ -140,14 +142,15 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=7)
     print(f'Created file {microclimate_file_name}')
 
 
-#Function to convert DayCent *.sch/*.evt file to LDNDC *.mana file
-#Grass is always PERG
-#Fertilization is always nh4 unless urea is recognized in DAYCENT input
-#Grazing is generic
-#Manure type is slurry per default
-#Tillage depth is always 0.2m
-#Non N fertilization and cultivation that is not tillage are ignored
-#kwargs are start_year and end_year; writes events in mana file only in range(start_year, end_year + 1)
+##Function to convert DayCent *.sch/*.evt file to LDNDC *.mana file
+##Grass is always PERG
+##Fertilization is always nh4 unless urea is recognized in DAYCENT input
+##Grazing is generic
+##Manure type is slurry per default
+##Tillage depth is always 0.2m
+##Non N fertilization and cultivation that is not tillage are ignored
+##Automatic irrigation is ignored
+##kwargs are start_year and end_year; writes events in mana file only in range(start_year, end_year + 1)
 def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, lookup, **kwargs):
     #Defaults
     fert_type = 'nh4' #Type of fertilizer in FERT event
@@ -307,7 +310,6 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                         #Irrigation event
                         elif event == 'IRRI':
                                 irri_type = line.split()[3]
-
                                 if irri100[irri_type]['AUIRRI'] == 2.0:
                                     i_amount = irri100['IRRAUT'] * 10
                                 elif irri100[irri_type]['AUIRRI'] == 0.0:
@@ -368,7 +370,8 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
     events_out.close()
 
 
-##Functions below are only used in JRC framework
+###Functions below are only used in JRC framework
+
 #Function to create setup file
 def create_setup(row, col, setup_file_name): #, site100):
     top = ET.Element('ldndcsetup')
@@ -481,11 +484,10 @@ def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
     
     print(f'Created file {airchemistry_file_name}')
 
-
 ##Conversion of DayCent *.wth to LDNDC *climate.txt
 ##Number of defined columns have to be specified in the function call (for JRC its 9)
 ##*args takes the site100 file, which may contain information about the lat, long, elevation
-def convert_wth_climate_jrc(wth_file_name, microclimate_file_name, *args, columns=9):
+def convert_wth_climate_jrc(wth_file_name, microclimate_file_name, start_year, *args, columns=9):
     #Read DayCent *.wth file
     wth_file = pd.read_csv(wth_file_name, sep='\t', header=None)
     wth_file = wth_file.iloc[:,:columns]
@@ -495,9 +497,11 @@ def convert_wth_climate_jrc(wth_file_name, microclimate_file_name, *args, column
     wth_file['prec'] = wth_file['prec']/10 #Convert from cm to mm
     wth_file['day'] = [str(d).zfill(2) for d in wth_file['day']]
     wth_file['month'] = [str(d).zfill(2) for d in wth_file['month']]
-    start_time =  f"{wth_file['year'][0]}-{wth_file['month'][0]}-{wth_file['day'][0]}"
+    #start_time =  f"{wth_file['year'][0]}-{wth_file['month'][0]}-{wth_file['day'][0]}"
     wth_file = wth_file.drop(['day', 'month', 'year', 'doy'], axis='columns')
     wth_file = wth_file.round(2)
+    #Only write observations starting in start year
+    wth_file = wth_file[wth_file['datetime'] > f'{start_year}-01-01']
 
     #Get lat and long from site.100 file
     if len(args) > 0:
@@ -513,7 +517,7 @@ def convert_wth_climate_jrc(wth_file_name, microclimate_file_name, *args, column
 
     with open(microclimate_file_name, 'w') as f:
         f.write('%global\n')
-        f.write(f'        time = "{start_time}/1"\n')
+        f.write(f'        time = "{start_year}-01-01/1"\n')
         f.write('\n')
         f.write('%climate\n')
         f.write('        id = 0\n')
