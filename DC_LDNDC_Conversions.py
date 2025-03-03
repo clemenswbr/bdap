@@ -492,7 +492,8 @@ def convert_wth_climate_jrc(wth_file_name, microclimate_file_name, start_year, *
     wth_file = pd.read_csv(wth_file_name, sep='\t', header=None)
     wth_file = wth_file.iloc[:,:columns]
     wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'tavg', 'rad'][:columns]
-    wth_file['datetime'] = pd.to_datetime([f'{day}-{month}-{year}' for day, month, year in zip(wth_file['day'], wth_file['month'], wth_file['year'])])
+    wth_file['datetime'] = pd.to_datetime([f'{year}-{month}-{day}' for day, month, year in zip(wth_file['day'], wth_file['month'], wth_file['year'])], format='%Y-%m-%d')
+    wth_file = wth_file[wth_file['datetime'] > pd.to_datetime(f'{start_year}-01-01', format='%Y-%m-%d')]
     #wth_file = wth_file.dropna(axis='rows', subset=['day'])
     wth_file = wth_file.astype({'day':int, 'month':int, 'year':int})
     wth_file['prec'] = wth_file['prec']/10 #Convert from cm to mm
@@ -502,7 +503,6 @@ def convert_wth_climate_jrc(wth_file_name, microclimate_file_name, start_year, *
     wth_file = wth_file.drop(['day', 'month', 'year', 'doy'], axis='columns')
     wth_file = wth_file.round(2)
     #Only write observations starting in start year
-    wth_file = wth_file[wth_file['datetime'] > f'{start_year}-01-01']
 
     #Get lat and long from site.100 file
     if len(args) > 0:
