@@ -447,7 +447,7 @@ def create_ldndc(row, col, ldndc_file_name, start_year, end_year):
 
 ###Function to copy generic airchemistry file (taken from Gebesee site) to local site
 ###Needs to be changed to the actual airchemistry once it is available
-def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
+def create_airchem(site_100_file_name, airchemistry_file_name, start_year, end_year):
     #Defaults
     CO2 = 405
 
@@ -458,16 +458,9 @@ def create_airchem(site_100_file_name, airchemistry_file_name, wth_file_name):
     except:
         total_deposition = -99.99
 
-    #Read *.wth file and create datetime 
-    wth_file = pd.read_csv(wth_file_name, sep='\t', header=None)
-    wth_file = wth_file.iloc[:,:3] 
-    wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'tavg', 'rad'][:3]
-    wth_file = wth_file.dropna(axis='rows', subset=['day'])
-    wth_file = wth_file.astype({'day':int, 'month':int, 'year':int})
-    wth_file['day'] = [str(d).zfill(2) for d in wth_file['day']]
-    wth_file['month'] = [str(d).zfill(2) for d in wth_file['month']]
-    datetime = [f"{wth_file.iloc[i]['year']}-{wth_file.iloc[i]['month']}-{wth_file.iloc[i]['day']}" for i in range(len(wth_file))]
-    #Create CO2 NH4 and NO3 deposition
+    #Create time vector
+    datetime = pd.date_range(start=pd.to_datetime(f'{start_year}-01-01', format='%Y-%m-%d'), end=pd.to_datetime(f'{start_year}-12-31', format='%Y-%m-%d'), freq='d')
+    #Create CO2, NH4 and NO3 deposition
     co2 = np.tile(CO2, len(datetime))
     nh4_deposition, no3_deposition = np.tile(total_deposition/2/365, len(datetime)), np.tile(total_deposition/2/365, len(datetime))
     df_out = pd.DataFrame({'*':datetime, 'co2':co2, 'nh4dry':nh4_deposition, 'no3dry':no3_deposition})
