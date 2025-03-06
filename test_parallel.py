@@ -15,5 +15,6 @@ ldndc_files = np.array_split(ldndc_files, cores)[index]
 with open(f'/eos/jeodpp/data/projects/SOIL-NACA/MODEL4/test_{index}.txt', 'w') as f:
     for line in ldndc_files:
         f.write(line + '\n')
+        f.write('test')
 
 f.close()
