@@ -16,6 +16,4 @@ ldndc_files = glob.glob('/eos/jeodpp/data/projects/SOIL-NACA/MODEL4/test_ldndc/*
 ldndc_files = np.array_split(ldndc_files, cores)[index]
 
 for sim in ldndc_files:
-    subprocess.run(f'{ldndc_executable} {ldndc_conf} {sim}'.split())
-
-f.close()
+    subprocess.run(f'{ldndc_executable} -c {ldndc_conf} {sim}'.split())
