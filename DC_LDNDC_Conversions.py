@@ -473,7 +473,7 @@ def create_airchem(airchemistry_file_name, start_year, end_year, N_deposition):
     CO2 = 405
 
     #Convert deposition to g N m^-2
-    total_deposition = N_deposition*0.001
+    total_deposition = round(N_deposition*0.001, 8)
     #Create time vector
     datetime = pd.date_range(start=pd.to_datetime(f'{start_year}-01-01', format='%Y-%m-%d'), end=pd.to_datetime(f'{end_year}-12-31', format='%Y-%m-%d'), freq='d')
     #Create CO2, NH4 and NO3 deposition
@@ -483,7 +483,7 @@ def create_airchem(airchemistry_file_name, start_year, end_year, N_deposition):
     #Write to file
     with open(airchemistry_file_name, 'w') as f:
         f.write('%global\n')
-        f.write(f'\ttime = "{datetime[0]}"\n')
+        f.write(f'\ttime = "{str(datetime[0])[:-9]}"\n')
         f.write('\n')
         f.write('%airchemistry\n')
         f.write('\tid = 0\n')
