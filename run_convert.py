@@ -42,7 +42,7 @@ for run in glob.glob('OUT/test/site_*_*.100'):
     print('Mana: ', f'OUT/test/mgt_{row}_{col}.evt', f'test_ldndc/{row}_{col}_mana.xml', 'omad100', 'harv100', 'irri100', 'lookup', 'start_year=2015', 'end_year=2024')
     print('Setup: ', row, col, f'OUT/test/{row}_{col}_setup.xml')
     print('LDNDC: ', row, col, f'test_ldndc/{row}_{col}_mana.xml')
-    print('Airchem: ', f'OUT/test/site_{row}_{col}.100', f'test_ldndc/{row}_{col}_airchemistry.txt', start_year, end_year)
+    print('Airchem: ', f'OUT/test/site_{row}_{col}.100', f'test_ldndc/{row}_{col}_airchemistry.txt', 2015, 2024)
     print('_______________________________')
 
     dcldndc.convert_dcsoil_ldndcsoil(f'OUT/test/soils_{row}_{col}.in', f'test_ldndc/{row}_{col}_site.xml', norg_ts=norg_ts, corg_ts=corg_ts)
