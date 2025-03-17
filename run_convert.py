@@ -16,7 +16,7 @@ C_data = rasterio.open('DE_sim/EU_C_kgkg_clip.tif')
 C = C_data.read(1)/1000 #Convert from g/kg to kg/kg
 C[C < 0] = -99.99
 N_deposition_data = rasterio.open('DE_sim/DDEP_RDN_m2Grid_repro_clip.tif')
-N_deposition = N_deposition_data.read(1)
+N_depo = N_deposition_data.read(1)
 #Read other common files
 lookup = pd.read_csv('bdap/dc_ldndc_lookup.csv', sep='\t')
 omad100 = dcldndc.read_dot100('../MODEL/DAYCENT/RUN/DayC/omad.100') 
@@ -33,8 +33,7 @@ for run in glob.glob('OUT/test/site_*_*.100'):
     #Get topsoil organic C and N from additional files
     corg_ts = C[row, col]
     norg_ts = N[row, col]
-    N_deposition = N_deposition[row, col]
-    print(N_deposition.shape) ####
+    N_deposition = N_depo[row, col]
     run_index = f'{row}_{col}'
 
     print('Corg: ', corg_ts, 'Norg: ', norg_ts, 'N_deposition: ', N_deposition)
