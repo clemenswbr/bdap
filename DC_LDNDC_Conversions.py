@@ -3,14 +3,15 @@ import pandas as pd
 import numpy as np
 import re
 import os
-
+import math
 
 ##Reads a *.100 (or similarly structured) file into a nested dictionary
 ##Other conversion functions require this structure
+##Keys and parameters are always upper case
 ##Is called by *.wth conversion
 def read_dot100(in_file_name):
     in_file = open(in_file_name, 'r')
-    lines = in_file.readlines()
+    lines = [line for line in in_file.readlines() if not line.startswith('#') and line.strip()]
     lines = [l.replace('#', '') for l in lines]
     lines = [l.replace('*** ', '') for l in lines]
     lines = [re.sub(' +', ' ', l) for l in lines]
@@ -18,12 +19,12 @@ def read_dot100(in_file_name):
     lines = [l.replace("'", "") for l in lines]
     in_dict = {}
     
-    for line in lines:
+    for line in lines: 
         if line.split()[0][0].isalpha():
-            key = line.split()[0]
+            key = line.split()[0].upper()
             in_dict[key] = {}
         else:
-            in_dict[key][line.split()[1]] = float(line.split()[0])
+            in_dict[key][line.split()[1].upper()] = float(line.split()[0])
 
     return in_dict
 
@@ -98,28 +99,30 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=7,
     wth_file = wth_file.iloc[:,:columns]
     wth_file.columns = ['day', 'month', 'year', 'doy', 'tmax', 'tmin', 'prec', 'rad', 'rel_humidity', 'wind'][:columns]
     wth_file = wth_file.drop(['rel_humidity'], axis='columns', errors='ignore')
-    wth_file['rad'] = wth_file['rad'] * 0.485 #Convert from Langley/d to W*m^-2
-    wth_file['wind'] = round(wth_file['wind'] * 1.609344, 4) #Convert from miles/hour to km/hour
     wth_file = wth_file.astype({'day':int, 'month':int, 'year':int})
     wth_file['prec'] = wth_file['prec']/10 #Convert from cm to mm
     wth_file['day'] = [str(d).zfill(2) for d in wth_file['day']]
     wth_file['month'] = [str(d).zfill(2) for d in wth_file['month']]
+    if columns > 7:
+        wth_file['rad'] = wth_file['rad'] * 0.485 #Convert from Langley/d to W*m^-2
+        wth_file['wind'] = round(wth_file['wind'] * 1.609344, 4) #Convert from miles/hour to km/hour
     start_time =  f"{wth_file['year'][0]}-{wth_file['month'][0]}-{wth_file['day'][0]}"
     wth_file = wth_file.drop(['day', 'month', 'year', 'doy'], axis='columns')
     wth_file = wth_file.round(2)
     #Insert estimation of tavg
-    tavg = round((wth_file['tmax'] - wth_file['tmin'])/2, 2)
-    wth_file.insert(2, column='tavg', value=tavg)
+    if estimate_tavg:
+        tavg = round((wth_file['tmax'] + wth_file['tmin'])/2, 2)
+        wth_file.insert(2, column='tavg', value=tavg)
 
     #Get lat and long from site.100 file
     if len(args) > 0:
         site100 = read_dot100(args[0])
-        site100['Site'].setdefault('SITLAT', -99.99)
-        site100['Site'].setdefault('SITLNG', -99.99)
-        site100['Site'].setdefault('ELEV', -99.99)
-        lat = site100['Site']['SITLAT']
-        long = site100['Site']['SITLNG']
-        elev = site100['Site']['ELEV']
+        site100['SITE'].setdefault('SITLAT', -99.99)
+        site100['SITE'].setdefault('SITLNG', -99.99)
+        site100['SITE'].setdefault('ELEV', -99.99)
+        lat = site100['SITE']['SITLAT']
+        long = site100['SITE']['SITLNG']
+        elev = site100['SITE']['ELEV']
     
     wth_file = wth_file.reset_index(drop=True)
 
@@ -146,22 +149,18 @@ def convert_wth_climate(wth_file_name, microclimate_file_name, *args, columns=7,
 ##Grass is always PERG
 ##Fertilization is always nh4 unless urea is recognized in DAYCENT input
 ##Grazing is generic
-##Manure type is slurry per default
 ##Tillage depth is always 0.2m
-##Non N fertilization and cultivation that is not tillage are ignored
+##Non N fertilization and cultivations other than tillage are ignored
 ##Automatic irrigation is ignored
-##kwargs are start_year and end_year; writes events in mana file only in range(start_year, end_year + 1)
+##kwargs are start_year, end_year, graz.100 for grassland simulations; writes events in mana file only in range(start_year, end_year + 1)
 def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, lookup, **kwargs):
     #Defaults
     fert_type = 'nh4' #Type of fertilizer in FERT event
-    manure_type = 'slurry' #Type of manure to be applied
+    manure_type = 'generic' #Type of manure to be applied
     till_depth = 0.2 #Tillage depth
     ni_amount = 4.0 #NI amount for nitrification inhibitors
     do_harvest = False #Changes to True, once a crop is planted, prevents harvest when there is no crop
     do_till = True #Changes to False once a crop is planted, prevents tilling while a crop is on the field
-    
-    start_year = kwargs['start_year']
-    end_year = kwargs['end_year']
     
     with open(sch_file_name, 'r') as events_in, open(mana_file_name, 'wb') as events_out:
         #Start xml
@@ -169,38 +168,48 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
         
         #Clean and homogenize lines; Make list of blocks
         in_lines = events_in.readlines()
-        in_lines = [re.sub(' +', ' ', line).lstrip(' ') for line in in_lines if len(line.split()) > 1]
+        in_lines = [re.sub(' +', ' ', line).lstrip(' ') for line in in_lines if line.strip()]
         in_block_lines = []
         block_last_years = []
         block_start_years = []
         start = 0
         block = 1
+        plant_grass = True
+
         for i, line in enumerate(in_lines):
-            if any([len(line.split()) < 3, line.startswith('#'), not line.split()[0].lstrip('-').isdigit()]):
+            if 'Option' in line:
                 start = i + 1
-                continue
-            elif 'Option' in line:
-                in_lines = in_lines[i:]
             elif 'Output starting year' in line:
                 block_start_years.append(int(line.split()[0]))
             elif 'Last year' in line:
                 block_last_years.append(int(line.split()[0]))
-            elif all((re.findall(r'1 1 CROP G\d', line), block == 1)):
+            elif all((re.findall(r'CROP G\d', line), block == 1, plant_grass)):
                 #Grassland simulation, plant PERG at the beginning of the simulation with initbiom=200
                 ldndc_event = ET.SubElement(top, 'event')
                 ldndc_event.set('type', 'plant')
-                ldndc_event.set('time', f'{start_year}-01-01')
+                ldndc_event.set('time', f'{block_start_years[0]}-01-01')
                 ldndc_event_info = ET.SubElement(ldndc_event, 'plant')
                 ldndc_event_info.set('type', 'PERG')
                 ldndc_event_info.set('name', 'PERG')
                 ldndc_event_subinfo = ET.SubElement(ldndc_event_info, 'grass')
                 ldndc_event_subinfo.set('initialbiomass', str(200))
                 do_harvest = True
+                plant_grass = False
                 ldndc_crop = 'PERG'
             elif '-999 -999 X' in line:
-                in_block_lines.append(in_lines[start:i])
+                block_lines = [l for l in in_lines[start:i] if len(l.split()) >= 3]
+                block_lines = [l for l in block_lines if all([l.split()[0].lstrip('-').isdigit(), 
+                                                              l.split()[1].isdigit()])]
+                in_block_lines.append(block_lines)
                 start = i + 1
                 block += 1
+
+        try:
+            start_year = kwargs['start_year']
+            end_year = kwargs['end_year']
+        except KeyError:
+            start_year = block_start_years[0]
+            end_year = block_last_years[-1]
 
         #Loop over blocks and write to mana_file_name
         for i, block in enumerate(in_block_lines):
@@ -218,7 +227,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                         if event == 'FERT':
                             try:
                                 f_amount = float(line.split()[3].split('N')[0][1:]) * 10000 * 0.001 #Conversion from g * m^-2 to kg * ha^-1
-                                f_type = 'urea' if re.findall(r'U\d', line.split()[3]) else fert_type
+                                fert_type = 'urea' if any([re.findall(r'U\d', line.split()[3]), 'UREA' in line.split()[3]]) else fert_type
                             except:
                                 print('Could not access fertilization info for:', line)
                                 continue
@@ -233,7 +242,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                                 ldndc_event_info.set('ni_amount', str(ni_amount))
                         #Get crop for planting event
                         elif event == 'CROP':
-                            crop = line.split()[3]
+                            crop = line.split()[3].upper()
                             try:
                                 ldndc_crop = lookup[lookup['dc_crop'] == crop]['ldndc_crop'].iloc[0]
                                 ldndc_initbiom = lookup[lookup['dc_crop'] == crop]['initbiom'].iloc[0]
@@ -262,18 +271,18 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                             ldndc_event.set('time', str(date)[:-9])
                             ldndc_event_info = ET.SubElement(ldndc_event, 'manure')
                             ldndc_event_info.set('type', manure_type)
-                            type = line.split()[3]
-                            c = omad100[type]['ASTGC']
-                            c = c/1000 * 10000 #Convert g C m^-2 -> kg C ha^-2
-                            cn = omad100[type]['ASTREC(1)']
-                            ldndc_event_info.set('c', str(c))
-                            ldndc_event_info.set('cn', str(cn))
+                            omad_type = line.split()[3].upper()
+                            C = omad100[omad_type]['ASTGC']
+                            C = C/1000 * 10000 #Convert g C m^-2 -> kg C ha^-2
+                            CN = omad100[omad_type]['ASTREC(1)']
+                            ldndc_event_info.set('c', str(C))
+                            ldndc_event_info.set('cn', str(CN))
                         #Harvest event
                         elif all((event == 'HARV', do_harvest == True)):
-                            type = line.split()[3]
+                            harv_type = line.split()[3].upper()
                             #Cut event; HARV H in DayCent
                             if ldndc_crop == 'PERG':
-                                harvest = float(harv100[type]['RMVSTR'])
+                                harvest = float(harv100[harv_type]['RMVSTR'])
                                 remains = str(round(1 - harvest, 3))
                                 ldndc_event = ET.SubElement(top, 'event')
                                 ldndc_event.set('type', 'cut')
@@ -284,7 +293,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                                 ldndc_event_info.set('remains_relative', remains)
                             #Harvest event for crops
                             else:
-                                residue = float(harv100[type]['RMVSTR'])
+                                residue = float(harv100[harv_type]['RMVSTR'])
                                 remains = str(1 - residue)
                                 ldndc_event = ET.SubElement(top, 'event')
                                 ldndc_event.set('type', 'harvest')
@@ -297,7 +306,7 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                         #Irrigation event
                         elif event == 'IRIG':
                             #Ignore irrigation to field capacity
-                            if line.split()[3][-2] == 'L':
+                            if line.split()[3].upper()[-2] == 'L':
                                 continue
                             else:
                                 i_amount = float(line.split()[3].split(',')[-1][:-1])
@@ -309,21 +318,21 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                                 ldndc_event_info.set('amount', str(i_amount))
                         #Irrigation event
                         elif event == 'IRRI':
-                                irri_type = line.split()[3]
-                                if irri100[irri_type]['AUIRRI'] == 2.0:
-                                    i_amount = irri100['IRRAUT'] * 10
-                                elif irri100[irri_type]['AUIRRI'] == 0.0:
-                                    i_amount = irri100[irri_type]['IRRAMT'] * 10
-                                else:
-                                    i_amount = -99.99
-                                ldndc_event = ET.SubElement(top, 'event')
-                                ldndc_event.set('type', 'irrigate')
-                                ldndc_event.set('time', str(date)[:-9])
-                                ldndc_event_info = ET.SubElement(ldndc_event, 'irrigate')
-                                ldndc_event_info.set('amount', str(i_amount))
+                            irri_type = line.split()[3].upper()
+                            if irri100[irri_type]['AUIRRI'] == 2.0:
+                                i_amount = irri100['IRRAUT'] * 10
+                            elif irri100[irri_type]['AUIRRI'] == 0.0:
+                                i_amount = irri100[irri_type]['IRRAMT'] * 10
+                            else:
+                                i_amount = -99.99
+                            ldndc_event = ET.SubElement(top, 'event')
+                            ldndc_event.set('type', 'irrigate')
+                            ldndc_event.set('time', str(date)[:-9])
+                            ldndc_event_info = ET.SubElement(ldndc_event, 'irrigate')
+                            ldndc_event_info.set('amount', str(i_amount))
                         #Cultivation event; is always till
                         elif event == 'CULT':
-                            cult_type = line.split()[3]
+                            cult_type = line.split()[3].upper()
                             if cult_type == 'HERB':
                                 continue
                             elif cult_type == 'SHRD':
@@ -348,18 +357,28 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
                                 ldndc_event.set('time', str(date)[:-9])
                                 ldndc_event_info = ET.SubElement(ldndc_event, 'till')
                                 ldndc_event_info.set('depth', str(till_depth))
-                            elif event == 'GRAZ':
-                                #Assumes 30 days of cattle grazing with 28 animals per hectare
-                                ldndc_event = ET.SubElement(top, 'event')
-                                ldndc_event.set('type', 'graze')
-                                ldndc_event.set('time', f'{str(date)[:-9]} -> +30')
-                                ldndc_event_info = ET.SubElement(ldndc_event, 'graze')
-                                ldndc_event_info.set('headcount', str(28))
-                                ldndc_event_info.set('grazinghours', str(9.5))
-                                ldndc_event_info.set('demandcarbon', str(4.6))
-                                ldndc_event_info.set('dungcarbon', str(1.44))
-                                ldndc_event_info.set('dungnitrogen', str(0.064))
-                                ldndc_event_info.set('urinenitrogen', str(0.096))
+                        elif event == 'GRAZ':
+                            graz_type = line.split()[3].upper()
+                            try:
+                                graz100 = kwargs['graz100']
+                                graz_type = line.split()[3].upper()
+                                remains_relative = round(math.exp(math.log(1.0 - graz100[graz_type]['FLGREM'] - graz100[graz_type]['FDGREM'])/30), 4)
+                                excretacarbon = graz100[graz_type]['GFCRET']
+                                excretanitrogen = graz100[graz_type]['GRET(1)']
+                                urinefraction = 1 - graz100[graz_type]['FECF(1)']
+                            except KeyError:
+                                print(f'No graz.100 file supplied or grazing type not known -> Skip grazing event at {str(date)[:-9]}')
+                                continue
+                            graz_start = pd.to_datetime(f'{str(date)[:-9]}')
+                            graz_end = graz_start + pd.Timedelta(days=30)
+                            ldndc_event = ET.SubElement(top, 'event')
+                            ldndc_event.set('type', 'graze')
+                            ldndc_event.set('time', f'{str(graz_start)[:-9]} -> {str(graz_end)[:-9]}')
+                            ldndc_event_info = ET.SubElement(ldndc_event, 'graze')
+                            ldndc_event_info.set('remains_relative', str(remains_relative))
+                            ldndc_event_info.set('excretacarbon', str(excretacarbon))
+                            ldndc_event_info.set('excretanitrogen', str(excretanitrogen))
+                            ldndc_event_info.set('urinefraction', str(urinefraction))
                         else:
                             continue
                 count_year += int(line.split()[0])
@@ -368,6 +387,8 @@ def convert_evt_mana(sch_file_name, mana_file_name, omad100, harv100, irri100, l
         tree.write(mana_file_name, xml_declaration=True)
     events_in.close()
     events_out.close()
+
+    print(f'Created file {mana_file_name}')
 
 
 ###Functions below are only used in JRC framework
@@ -445,21 +466,16 @@ def create_ldndc(row, col, ldndc_file_name, start_year, end_year):
     print(f'Created file {ldndc_file_name}')
 
 
-###Function to copy generic airchemistry file (taken from Gebesee site) to local site
-###Needs to be changed to the actual airchemistry once it is available
-def create_airchem(site_100_file_name, airchemistry_file_name, start_year, end_year):
+###Function to create *airchemistry.txt file. Needs to have N deposition (dry) as external input
+###Deposition of N is assumed to be mg N m^-2 a^-1 (unit in EMEP dataset)
+def create_airchem(airchemistry_file_name, start_year, end_year, N_deposition):
     #Defaults
     CO2 = 405
 
-    #Get combined deposition from *site.100
-    try:
-        site_100_file = read_dot100(site_100_file_name)
-        total_deposition = site_100_file['External']['EPNFA(2)']/1000 #Convert from mg/m2 to g/m2
-    except:
-        total_deposition = -99.99
-
+    #Convert deposition to g N m^-2
+    total_deposition = N_deposition*0.001
     #Create time vector
-    datetime = pd.date_range(start=pd.to_datetime(f'{start_year}-01-01', format='%Y-%m-%d'), end=pd.to_datetime(f'{start_year}-12-31', format='%Y-%m-%d'), freq='d')
+    datetime = pd.date_range(start=pd.to_datetime(f'{start_year}-01-01', format='%Y-%m-%d'), end=pd.to_datetime(f'{end_year}-12-31', format='%Y-%m-%d'), freq='d')
     #Create CO2, NH4 and NO3 deposition
     co2 = np.tile(CO2, len(datetime))
     nh4_deposition, no3_deposition = np.tile(total_deposition/2/365, len(datetime)), np.tile(total_deposition/2/365, len(datetime))
