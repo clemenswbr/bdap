@@ -516,12 +516,12 @@ def convert_wth_climate_jrc(wth_file_name, microclimate_file_name, start_year, *
     #Get lat and long from site.100 file
     if len(args) > 0:
         site100 = read_dot100(args[0])
-        site100['Site'].setdefault('SITLAT', -99.99)
-        site100['Site'].setdefault('SITLNG', -99.99)
-        site100['Site'].setdefault('ELEV', -99.99)
-        lat = site100['Site']['SITLAT']
-        long = site100['Site']['SITLNG']
-        elev = site100['Site']['ELEV']
+        site100['SITE'].setdefault('SITLAT', -99.99)
+        site100['SITE'].setdefault('SITLNG', -99.99)
+        site100['SITE'].setdefault('ELEV', -99.99)
+        lat = site100['SITE']['SITLAT']
+        long = site100['SITE']['SITLNG']
+        elev = site100['SITE']['ELEV']
     
     wth_file = wth_file.reset_index(drop=True)
 
