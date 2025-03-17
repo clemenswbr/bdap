@@ -34,6 +34,7 @@ for run in glob.glob('OUT/test/site_*_*.100'):
     corg_ts = C[row, col]
     norg_ts = N[row, col]
     N_deposition = N_deposition[row, col]
+    print(N_deposition.shape) ####
     run_index = f'{row}_{col}'
 
     print('Corg: ', corg_ts, 'Norg: ', norg_ts, 'N_deposition: ', N_deposition)
