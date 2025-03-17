@@ -36,7 +36,7 @@ for run in glob.glob('OUT/test/site_*_*.100'):
     N_deposition = N_deposition[row, col]
     run_index = f'{row}_{col}'
 
-    print('Corg: ', corg_ts, 'Norg: ', norg_ts)
+    print('Corg: ', corg_ts, 'Norg: ', norg_ts, 'N_deposition: ', N_deposition)
     print('Soil: ', f'OUT/test/soils_{row}_{col}.in', f'test_ldndc/{row}_{col}_site.xml', 'corg_ts=corg_ts, norg_ts=norg_ts')
     print('Meteo: ', f'OUT/test/meteo_{row}_{col}.wth', f'test_ldndc/{row}_{col}_climate.txt', '2015', f'OUT/test/site_{row}_{col}.100')
     print('Mana: ', f'OUT/test/mgt_{row}_{col}.evt', f'test_ldndc/{row}_{col}_mana.xml', 'omad100', 'harv100', 'irri100', 'lookup', 'start_year=2015', 'end_year=2024')
