@@ -54,4 +54,5 @@ for run in glob.glob('OUT/test/site_*_*.100'):
 
 N_data.close()
 C_data.close()
+N_deposition_data.close()
 print('DONE')
